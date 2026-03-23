@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-svc
+  namespace: tax
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  - name: dashboard
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: gateway
+    project: agent
+  sessionAffinity: None
+  type: ClusterIP

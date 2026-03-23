@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: front-chat-svc
+  namespace: dev
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+  selector:
+    app: front-chat
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+  name: front-chat-svc-lb
+  namespace: dev
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+  selector:
+    app: front-chat

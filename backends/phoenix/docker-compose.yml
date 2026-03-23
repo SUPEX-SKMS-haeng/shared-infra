@@ -1,0 +1,20 @@
+services:
+  phoenix:
+    container_name: phoenix
+    image: arizephoenix/phoenix:version-12.25.0
+    ports:
+      - "6006:6006"
+    environment:
+      - PHOENIX_HOST=0.0.0.0
+      - PHOENIX_PORT=6006
+      - PHOENIX_WORKING_DIR=/data
+      
+    volumes:
+      - ../../data/phoenix:/data
+    
+    networks:
+      - phoenix-network
+
+networks:
+  phoenix-network:
+    driver: bridge

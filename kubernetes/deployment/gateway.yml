@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gateway
+  name: gateway
+  namespace: dev
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: gateway
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - env:
+        - name: WORKER
+          value: "2"
+        envFrom:
+        - configMapRef:
+            name: common-config
+        - configMapRef:
+            name: infra-config
+        - secretRef:
+            name: common-secret
+        image: workforce2.azurecr.io/playground/traefik:3.1
+        imagePullPolicy: Always
+        name: gateway
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        - containerPort: 8080
+          name: dashboard
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 8000
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /mnt/data
+          name: data
+        - mountPath: /etc/config/dynamic_conf.yml
+          name: dynamic-conf
+          subPath: dynamic_conf.yml
+        - mountPath: /etc/traefik/traefik.yml
+          name: conf
+          subPath: traefik.yml
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: dev-account
+      serviceAccountName: dev-account
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: dynamic-conf
+        configMap:
+          defaultMode: 420
+          name: gateway-dynamic-conf
+      - name: conf
+        configMap:
+          defaultMode: 420
+          name: gateway-conf

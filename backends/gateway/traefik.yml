@@ -1,0 +1,41 @@
+################################################################
+# Global configuration
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: true
+
+################################################################
+# EntryPoints configuration
+
+entryPoints:
+  web:
+    address: :8000
+
+################################################################
+# Traefik logs configuration
+
+log:
+  level: DEBUG
+  # filePath: /var/log/traefik/traefik.log
+
+################################################################
+# Access logs configuration
+
+accessLog:
+  addInternals: true
+  filePath: /var/log/traefik/traefik_access.log
+  format: json
+
+################################################################
+# API and dashboard configuration
+
+api:
+  insecure: true
+
+
+################################################################
+# Provider configuration
+
+providers:
+  file:
+    filename: /etc/config/dynamic_conf.yml

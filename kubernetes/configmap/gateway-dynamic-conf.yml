@@ -1,0 +1,100 @@
+apiVersion: v1
+data:
+  dynamic_conf.yml: |-
+    ## CODE GENERATED AUTOMATICALLY
+    ## THIS FILE MUST NOT BE EDITED BY HAND
+    http:
+      routers:
+        base-router:
+          entryPoints:
+            - web
+          rule: PathRegexp(`/api/v1/base/.*`)
+          middlewares:
+            - retry-attempts
+            - auth
+            - base-replace-path
+          service: "base-svc"
+        chat-router:
+          entryPoints:
+            - web
+          rule: PathRegexp(`/api/v1/chat/.*`)
+          middlewares:
+            - auth
+            - chat-replace-path
+          service: "chat-svc"
+        auth-router:
+          entryPoints:
+            - web
+          rule: PathRegexp(`/api/v1/auth/.*`)
+          service: "auth-svc"
+          middlewares:
+            - retry-attempts
+            - auth-replace-path
+        llm-gateway-router:
+          entryPoints:
+            - web
+          rule: PathRegexp(`/api/v1/llm-gateway/.*`)
+          service: "llm-gateway-svc"
+          middlewares:
+            - auth
+            - retry-attempts
+            - llm-gateway-replace-path
+
+      services:
+        base-svc:
+          loadBalancer:
+            servers:
+              - url: http://base-svc:8002/
+        chat-svc:
+          loadBalancer:
+            servers:
+              - url: http://chat-svc:8003/
+        auth-svc:
+          loadBalancer:
+            servers:
+              - url: http://auth-svc:8001/
+        llm-gateway-svc:
+          loadBalancer:
+            servers:
+              - url: http://llm-gateway-svc:8080/
+
+      middlewares:
+        auth:
+          forwardAuth:
+            # template app에 추가해둔 api 참고
+            address: http://auth-svc:8001/api/v1/verify
+            trustForwardHeader: true
+            authResponseHeaders:
+              - user_id
+              - email
+              - username
+              - department
+              - company
+              - role
+            authRequestHeaders:
+              - Authorization
+        retry-attempts:
+          retry:
+            attempts: 2
+            initialInterval: 500ms
+        auth-replace-path:
+          replacePathRegex:
+            regex: "^/api/v1/auth/(.*)"
+            replacement: "/api/v1/$1"
+        base-replace-path:
+          replacePathRegex:
+            regex: "^/api/v1/base/(.*)"
+            replacement: "/api/v1/$1"
+        chat-replace-path:
+          replacePathRegex:
+            regex: "^/api/v1/chat/(.*)"
+            replacement: "/api/v1/$1"
+        llm-gateway-replace-path:
+          replacePathRegex:
+            regex: "^/api/v1/llm-gateway/(.*)"
+            replacement: "/api/v1/$1"
+
+kind: ConfigMap
+metadata:
+  name: gateway-dynamic-conf
+  namespace: dev

@@ -240,3 +240,6 @@ build/
 
 # Bruno Tests
 backends/llm-gateway/tests
+# 개발 서버 로그/PID
+.dev-logs/
+.dev-pids

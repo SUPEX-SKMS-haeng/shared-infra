@@ -1,0 +1,99 @@
+name: Sync Issues to Notion
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled, assigned, unassigned]
+  workflow_dispatch:
+
+env:
+  NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+  NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: env.NOTION_API_KEY != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync issue to Notion
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            if (!issue) return;
+
+            const notionApiKey = process.env.NOTION_API_KEY;
+            const databaseId = process.env.NOTION_DATABASE_ID;
+
+            // Map GitHub state to Notion status
+            const statusMap = {
+              'open': 'To Do',
+              'closed': 'Done'
+            };
+
+            // Check labels for in-progress
+            const labels = issue.labels.map(l => l.name);
+            let status = statusMap[issue.state] || 'To Do';
+            if (labels.includes('in-progress')) status = 'In Progress';
+            if (labels.includes('review')) status = 'In Review';
+
+            // Priority from labels
+            let priority = 'Medium';
+            if (labels.includes('priority:high')) priority = 'High';
+            if (labels.includes('priority:low')) priority = 'Low';
+
+            // Search for existing page
+            const searchRes = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${notionApiKey}`,
+                'Notion-Version': '2022-06-28',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                filter: {
+                  property: 'Issue Number',
+                  number: { equals: issue.number }
+                }
+              })
+            });
+            const searchData = await searchRes.json();
+            const existingPage = searchData.results?.[0];
+
+            const properties = {
+              'Name': { title: [{ text: { content: issue.title } }] },
+              'Issue Number': { number: issue.number },
+              'Status': { select: { name: status } },
+              'Priority': { select: { name: priority } },
+              'Assignee': { rich_text: [{ text: { content: issue.assignees?.map(a => a.login).join(', ') || '' } }] },
+              'Labels': { multi_select: labels.filter(l => !l.startsWith('priority:')).map(l => ({ name: l })) },
+              'URL': { url: issue.html_url },
+              'Repository': { select: { name: context.repo.repo } }
+            };
+
+            if (existingPage) {
+              // Update existing
+              await fetch(`https://api.notion.com/v1/pages/${existingPage.id}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${notionApiKey}`,
+                  'Notion-Version': '2022-06-28',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ properties })
+              });
+              core.info(`Updated Notion page for issue #${issue.number}`);
+            } else {
+              // Create new
+              await fetch('https://api.notion.com/v1/pages', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${notionApiKey}`,
+                  'Notion-Version': '2022-06-28',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ parent: { database_id: databaseId }, properties })
+              });
+              core.info(`Created Notion page for issue #${issue.number}`);
+            }

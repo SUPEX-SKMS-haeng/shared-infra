@@ -1,0 +1,45 @@
+{
+  // 프론트엔드 (TypeScript/React) VS Code 공통 설정
+  // setup-repo.sh에 의해 .vscode/settings.json으로 복사됩니다.
+
+  // ── 저장 시 자동 포맷 ──
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // ── TypeScript / JavaScript ──
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // ── ESLint ──
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // ── 파일 관련 ──
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.eol": "\n",
+  "files.encoding": "utf8",
+
+  // ── YAML ──
+  "[yaml]": {
+    "editor.tabSize": 2
+  },
+
+  // ── 추천 확장 안내 ──
+  // 필수 설치: esbenp.prettier-vscode, editorconfig.editorconfig
+  // 권장 설치: dbaeumer.vscode-eslint
+}

@@ -1,0 +1,52 @@
+name: "기능 개발"
+description: "새 기능 구현 태스크"
+labels: ["feat"]
+body:
+  - type: markdown
+    attributes:
+      value: "## 기능 개발 태스크"
+  - type: textarea
+    id: description
+    attributes:
+      label: "설명"
+      description: "무엇을, 왜 개발하는지 설명"
+    validations:
+      required: true
+  - type: textarea
+    id: requirements
+    attributes:
+      label: "상세 요구사항"
+      description: "구체적인 구현 항목 (체크리스트)"
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "수용 기준 (Acceptance Criteria)"
+      description: "완료로 인정되는 조건"
+    validations:
+      required: true
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: "예상 난이도"
+      options:
+        - "S (0.5일)"
+        - "M (1일)"
+        - "L (2일)"
+        - "XL (3일+)"
+    validations:
+      required: true
+  - type: textarea
+    id: related-files
+    attributes:
+      label: "관련 파일"
+      description: "수정이 예상되는 파일 경로"
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: "의존성"
+      description: "선행 태스크가 있으면 이슈 번호 명시"

@@ -1,0 +1,36 @@
+{
+  // 백엔드 (Python) VS Code 공통 설정
+  // setup-repo.sh에 의해 .vscode/settings.json으로 복사됩니다.
+
+  // ── 저장 시 자동 포맷 ──
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": null,
+
+  // ── Python / Ruff ──
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+
+  // ── Ruff 확장 설정 ──
+  "ruff.configurationPreference": "filesystemFirst",
+  "ruff.lineLength": 120,
+
+  // ── 파일 관련 ──
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.eol": "\n",
+  "files.encoding": "utf8",
+
+  // ── YAML (docker-compose, k8s 등) ──
+  "[yaml]": {
+    "editor.tabSize": 2
+  },
+
+  // ── 추천 확장 안내 ──
+  // 필수 설치: charliermarsh.ruff, editorconfig.editorconfig
+  // 권장 설치: ms-python.python, ms-python.vscode-pylance
+}

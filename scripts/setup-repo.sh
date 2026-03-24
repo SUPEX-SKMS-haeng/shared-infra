@@ -203,7 +203,58 @@ else
   echo "     설치: pip install pre-commit && pre-commit install"
 fi
 
-# 8. .gitignore에 심볼릭 링크 관련 항목 추가 (이미 있으면 스킵)
+# 8. README.md 생성 (기존 README.md가 없거나 자동생성된 것이면 덮어쓰기)
+echo ""
+echo "▶ README.md 생성 중..."
+
+# 앱별 설명과 포트 매핑
+case "$REPO_NAME" in
+  backend-auth)         APP_DESC="인증/JWT/사용자관리"; APP_PORT="8001"; APP_RUN="uv run uvicorn app.main:app --port 8001 --reload" ;;
+  backend-base)         APP_DESC="기본 API/조직관리"; APP_PORT="8002"; APP_RUN="uv run uvicorn app.main:app --port 8002 --reload" ;;
+  backend-chat)         APP_DESC="채팅/LLM 스트리밍"; APP_PORT="8003"; APP_RUN="uv run uvicorn app.main:app --port 8003 --reload" ;;
+  backend-llm-gateway)  APP_DESC="LLM 라우팅/프롬프트관리"; APP_PORT="8080"; APP_RUN="uv run uvicorn app.main:app --port 8080 --reload" ;;
+  backend-mcp)          APP_DESC="MCP 도구/벡터DB"; APP_PORT="8084"; APP_RUN="uv run uvicorn app.main:app --port 8084 --reload" ;;
+  frontend-admin)       APP_DESC="관리자 대시보드"; APP_PORT="3001"; APP_RUN="pnpm dev" ;;
+  frontend-chat)        APP_DESC="채팅 UI"; APP_PORT="3000"; APP_RUN="pnpm dev" ;;
+  frontend-shared)      APP_DESC="공통 프론트엔드 컴포넌트 (라이브러리)"; APP_PORT="-"; APP_RUN="pnpm build" ;;
+  *)                    APP_DESC=""; APP_PORT=""; APP_RUN="" ;;
+esac
+
+if [ -n "$APP_DESC" ]; then
+  cat > "${REPO_DIR}/README.md" << README_EOF
+# ${REPO_NAME}
+
+${APP_DESC} — 포트 :${APP_PORT}
+
+## 빠른 시작
+
+> 최초 셋업이 안 됐다면 [개발자 가이드 — 최초 셋업](https://github.com/agent-template-apps/shared-infra/blob/main/docs/DEVELOPER_GUIDE.md#2-%EC%B5%9C%EC%B4%88-%EC%85%8B%EC%97%85-%EC%8B%A0%EA%B7%9C-%EA%B0%9C%EB%B0%9C%EC%9E%90)을 먼저 진행하세요.
+
+\`\`\`bash
+# 서버 실행
+${APP_RUN}
+\`\`\`
+
+## 개발 가이드
+
+모든 개발 워크플로우, 코드 표준, 스크립트 사용법은 shared-infra에서 관리합니다.
+
+- [개발자 가이드](https://github.com/agent-template-apps/shared-infra/blob/main/docs/DEVELOPER_GUIDE.md) — 셋업, 일일 개발, 워크플로우, 트러블슈팅
+- [백엔드 개발 표준](https://github.com/agent-template-apps/shared-infra/blob/main/docs/standards/backend-standards.md)
+- [프론트엔드 개발 표준](https://github.com/agent-template-apps/shared-infra/blob/main/docs/standards/frontend-standards.md)
+
+## 주요 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| \`claude\` → \`/start-task {이슈번호}\` | 태스크 시작 (브랜치 생성) |
+| \`claude\` → \`/finish-task\` | 린트 → 커밋 → PR 자동 생성 |
+| \`./infra/scripts/setup-repo.sh\` | shared-infra 설정 재배포 |
+README_EOF
+  echo "  ✓ README.md 생성 완료"
+fi
+
+# 10. .gitignore에 심볼릭 링크 관련 항목 추가 (이미 있으면 스킵)
 echo ""
 echo "▶ .gitignore 확인 중..."
 touch "${REPO_DIR}/.gitignore"
@@ -215,7 +266,7 @@ if ! grep -q "*.bak.*" "${REPO_DIR}/.gitignore" 2>/dev/null; then
   echo "  ✓ .gitignore에 백업 파일 제외 추가"
 fi
 
-# 8. 결과 확인
+# 결과 확인
 echo ""
 echo "=== ${REPO_NAME} 셋업 완료 ==="
 echo ""

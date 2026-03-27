@@ -1,7 +1,7 @@
 # 프론트엔드 개발표준 (React/TypeScript)
 
-> **적용 대상**: frontend (chat + admin 통합 단일 레포)
-> **기술 스택**: React 19 / TypeScript 5.9 / Vite 8 / Tailwind CSS 4
+> **적용 대상**: frontend — admin, chat 2개 앱 + shared 공유 라이브러리 (monorepo)
+> **기술 스택**: React 18.3.0 / TypeScript 5.3.0 / Vite 5.0.0 / Tailwind CSS 3.4.0
 > **UI 컴포넌트**: shadcn/ui (Radix 기반)
 > **상태관리**: jotai + jotai-tanstack-query (atomWithQuery/atomWithMutation)
 > **패키지 관리**: pnpm
@@ -17,43 +17,79 @@
 
 - 패키지 관리: `pnpm`
 - 빌드: `pnpm build` (tsc -b && vite build)
-- 개발서버: `pnpm dev` (port 3000, API proxy → localhost:8000)
+- 개발서버:
+  - admin: `pnpm dev` (port 3001, API proxy → localhost:8000)
+  - chat: `pnpm dev` (port 3000, API proxy → localhost:8000)
 - 린트: `pnpm lint` (ESLint flat config)
 - 타입체크: `pnpm type-check`
-- 빌드 도구: Vite 8, TypeScript 5.9 (strict mode)
-- React 19
+- 빌드 도구: Vite 5.0.0, TypeScript 5.3.0 (strict mode)
+- React 18.3.0
+
+### Import alias
+
+- `@/` → `./src/` (각 앱 내부 모듈)
+- `@shared/` → `../shared/` (공유 라이브러리)
+- 예: `import { axiosInstance } from '@shared/lib/axios'`
+- 예: `import { useUserData } from '@/hooks/useUserData'`
 
 ---
 
 ## 1. 프로젝트 구조
 
-### 도메인 구조
+### 모노레포 구조
 
-chat, admin, auth 3개 도메인이 단일 레포에 통합되어 있습니다.
+admin, chat 2개 앱과 shared 공유 라이브러리로 구성됩니다.
 
 ```
-src/
-├── api/{domain}/           ← 도메인별 API (admin/, auth/, chat/)
-├── components/
-│   ├── ui/                 ← shadcn/ui 기반 공통 컴포넌트
-│   ├── layout/{domain}/    ← 도메인별 레이아웃 (admin/, chat/)
-│   └── features/{domain}/  ← 도메인별 기능 컴포넌트 (admin/, auth/, chat/)
-├── hooks/{domain}/         ← 도메인별 hooks (data hooks + handler hooks)
-├── store/{domain}/         ← 도메인별 jotai 아톰
-├── types/{domain}/         ← 도메인별 타입 + common/
-├── locale/ko/{domain}.json ← 도메인별 번역 파일
-├── routes/                 ← React Router (ProtectedRoute 포함)
-├── pages/                  ← 전체 페이지 (Login, 404, 403)
-├── lib/                    ← 라이브러리 래퍼 (axios, queryClient)
-├── utils/                  ← 유틸리티 (caseConverter 등)
-└── data/                   ← 목 데이터 (개발용)
+frontend/
+├── admin/                  ← Admin Dashboard (port 3001)
+│   └── src/
+│       ├── api/            ← API 함수 (플랫 파일: user.ts, organization.ts 등)
+│       ├── components/
+│       │   ├── auth/       ← ProtectedRoute
+│       │   ├── features/   ← 도메인별 기능 (dashboard/, users/, organizations/, deployments/)
+│       │   ├── layout/     ← AdminLayout
+│       │   ├── sidebar/    ← Sidebar, Menus, UserProfile
+│       │   └── ui/         ← 재사용 UI (DataTable, Modal, Pagination, SearchBar 등)
+│       ├── data/           ← 목 데이터 (개발용)
+│       ├── hooks/          ← 플랫 파일 (useUserData.ts, useUserTableHandler.ts 등)
+│       ├── locale/ko/      ← common.json (단일 번역 파일)
+│       ├── pages/          ← Login
+│       ├── routes/         ← AppRoutes
+│       ├── store/          ← 플랫 파일 (userUI.ts, organizationUI.ts 등)
+│       └── types/          ← 플랫 파일 (user.ts, organization.ts, search.ts 등)
+├── chat/                   ← Chat UI (port 3000)
+│   └── src/
+│       ├── api/            ← API 함수 (chat.ts, llmGateway.ts)
+│       ├── components/
+│       │   ├── auth/       ← ProtectedRoute
+│       │   ├── chat/       ← Chat, ChatBubble, ChatInput, MessageList 등
+│       │   ├── common/     ← Toast
+│       │   ├── layout/     ← ChatLayout
+│       │   ├── sidebar/    ← Sidebar, ChatHistory, UserProfile
+│       │   ├── topbar/     ← TopBar, GroupSelector, ModelSelector
+│       │   └── ui/         ← tooltip 등
+│       ├── hooks/          ← 플랫 파일 (useChatDataHandler.ts 등)
+│       ├── locale/ko/      ← common.json (단일 번역 파일)
+│       ├── pages/          ← Login
+│       ├── routes/         ← AppRoutes
+│       ├── store/          ← 플랫 파일 (chat.ts, scroll.ts)
+│       └── types/          ← 플랫 파일 (chat.ts, message.ts 등)
+└── shared/                 ← 공유 라이브러리 (src/ 없이 루트에 모듈)
+    ├── api/                ← 공통 API (auth.ts, group.ts)
+    ├── components/auth/    ← LoginForm
+    ├── hooks/              ← useAuth.ts, useAxiosInterceptor.ts, useFetchInterceptor.ts
+    ├── lib/                ← axios.ts (axiosInstance), queryClient.ts
+    ├── store/              ← auth.ts (userAtom, selectedGroupAtom 등)
+    ├── types/              ← auth.ts (User, LoginRequest 등)
+    └── utils/              ← caseConverter.ts, utils.ts (cn 등)
 ```
 
 ### 라우팅
 
-- `/` — chat 도메인
-- `/admin` — admin 도메인
-- `ProtectedRoute`로 인증/권한 제어
+- **admin**: `/dashboard`, `/users`, `/organizations`, `/deployments`, `/chats`
+- **chat**: `/` (채팅), `/login`
+- 양쪽 모두 `ProtectedRoute`로 인증/권한 제어
 
 ---
 
@@ -62,8 +98,8 @@ src/
 ### 2.1 axiosInstance 사용
 
 ```typescript
-// src/api/admin/user.ts
-import { axiosInstance } from '@/lib/axios';
+// admin/src/api/user.ts
+import { axiosInstance } from '@shared/lib/axios';
 
 export const getUserList = async (params: { offset: number; limit: number }) => {
   const { data } = await axiosInstance.get<IUserListResponse>('/auth/user', { params });
@@ -73,8 +109,8 @@ export const getUserList = async (params: { offset: number; limit: number }) => 
 
 ### 2.2 규칙
 
-- `axiosInstance`는 `@/lib/axios`에서 import (직접 `axios.create` 금지)
-- API 호출 함수는 `src/api/{domain}/` 디렉토리에만 정의 — 컴포넌트에서 직접 호출 금지
+- `axiosInstance`는 `@shared/lib/axios`에서 import (직접 `axios.create` 금지)
+- API 호출 함수는 각 앱의 `src/api/`에 플랫 파일로 정의 — 컴포넌트에서 직접 호출 금지
 - URL prefix: `/auth/user`, `/chat/simple` 등 (baseURL `/api/v1`이 자동 추가됨)
 - 스트리밍 응답 (SSE): `fetch` + `text/event-stream` 사용 (axios는 스트리밍 미지원)
 
@@ -84,7 +120,7 @@ export const getUserList = async (params: { offset: number; limit: number }) => 
 - **요청**: `camelCase` → `snake_case` (params, data)
 - **응답**: `snake_case` → `camelCase` (response.data)
 - FormData는 변환 제외
-- 변환 유틸: `@/utils/caseConverter`
+- 변환 유틸: `@shared/utils/caseConverter`
 - IMPORTANT: 프론트엔드 코드에서는 항상 camelCase 사용. 백엔드 snake_case를 직접 쓰지 않음
 
 ### 2.4 서버 에러 응답 처리
@@ -133,13 +169,13 @@ LoginForm → useAuth().login() → POST /auth/login → accessToken 저장 → 
 ### 3.3 사용자 상태
 
 ```typescript
-// src/store/auth/
+// shared/store/auth.ts
 const userAtom = atom<User | null>(null);
 const selectedGroupAtom = atom<GroupInfo | null>(null);
-const userGroupsAtom = atom<GroupInfo[]>([]);
+const isAuthenticatedAtom = atom<boolean>(...);
 ```
 
-- `useAuth()` — 로그인/로그아웃 동작
+- `useAuth()` — 로그인/로그아웃 동작 (`shared/hooks/useAuth.ts`)
 - `useCurrentUser()` — 현재 사용자 정보, isSuperAdmin 판단
 
 ---
@@ -171,17 +207,42 @@ export default UserProfile;
 - Props 인터페이스는 컴포넌트 파일 상단에 정의
 - `useEffect`에 cleanup 함수 빠뜨리지 않기
 
-### 4.3 디렉토리별 컴포넌트 분류
+### 4.3 앱별 컴포넌트 구조
 
+**admin**:
 ```
 components/
-├── ui/                  ← shadcn/ui 기반 공통 컴포넌트
-├── layout/{domain}/     ← 도메인별 레이아웃 (admin/, chat/)
-└── features/{domain}/   ← 도메인별 기능 컴포넌트 (admin/, auth/, chat/)
+├── auth/           ← ProtectedRoute
+├── features/       ← 도메인별 기능 컴포넌트
+│   ├── dashboard/
+│   ├── users/
+│   ├── organizations/  ← 하위에 assignments/, members/, prompt/, usage/
+│   └── deployments/
+├── layout/         ← AdminLayout
+├── sidebar/        ← Sidebar, Menus, UserProfile
+└── ui/             ← DataTable, Modal, Pagination, SearchBar, ActionBar 등
 ```
 
-- **공통 UI** (`components/ui/`): shadcn/ui 기반, 여러 도메인에서 재사용
-- **도메인별 기능** (`components/features/{domain}/`): 특정 도메인에서만 사용하는 컴포넌트
+**chat**:
+```
+components/
+├── auth/           ← ProtectedRoute
+├── chat/           ← Chat, ChatBubble, ChatInput, MessageList 등
+├── common/         ← Toast
+├── layout/         ← ChatLayout
+├── sidebar/        ← Sidebar, ChatHistory, UserProfile
+├── topbar/         ← TopBar, GroupSelector, ModelSelector
+└── ui/             ← tooltip 등
+```
+
+**shared**:
+```
+components/
+└── auth/           ← LoginForm (양 앱에서 공유)
+```
+
+- **공통 UI** (`components/ui/`): 각 앱 내에서 shadcn/ui 기반 재사용 컴포넌트
+- **공유 컴포넌트** (`shared/components/`): 양 앱에서 import하여 사용
 
 ---
 
@@ -196,8 +257,12 @@ components/
 
 - 서버 상태는 `atomWithQuery`/`atomWithMutation` 사용
 - IMPORTANT: 직접 `useQuery`/`useMutation` 사용 금지 — jotai-tanstack-query를 통해 사용
-- `store/{domain}/` — 순수 클라이언트 상태 (UI 상태)
-- `hooks/{domain}/` — 서버 상태 (atomWithQuery) + 비즈니스 로직
+- 각 앱 `store/` — 순수 클라이언트 상태 (UI 상태), 플랫 파일 구조
+  - admin: `store/userUI.ts`, `store/organizationUI.ts` 등
+  - chat: `store/chat.ts`, `store/scroll.ts`
+- 각 앱 `hooks/` — 서버 상태 (atomWithQuery) + 비즈니스 로직, 플랫 파일 구조
+  - admin: `hooks/useUserData.ts`, `hooks/useUserTableHandler.ts` 등
+  - chat: `hooks/useChatDataHandler.ts`, `hooks/useChatSendHandler.ts` 등
 - 전역 상태 남용 금지 — 컴포넌트 로컬 `useState`로 충분하면 전역 스토어 사용하지 않음
 
 ---
@@ -206,8 +271,10 @@ components/
 
 ### 6.1 위치
 
-- `src/types/{domain}/` — 도메인별 타입
-- `src/types/common/` — 공통 타입 (Pagination 등)
+- 각 앱 `src/types/` — 앱별 타입, 플랫 파일 구조
+  - admin: `types/user.ts`, `types/organization.ts`, `types/search.ts` 등
+  - chat: `types/chat.ts`, `types/message.ts` 등
+- `shared/types/` — 공유 타입 (`auth.ts` 등)
 
 ### 6.2 네이밍 컨벤션
 
@@ -235,7 +302,7 @@ interface LoginRequest {
 
 ## 7. 스타일링
 
-- **Tailwind CSS 4** 전용 (via `@tailwindcss/vite` 플러그인) — 인라인 `style` 금지
+- **Tailwind CSS 3.4.0** 전용 — 인라인 `style` 금지
 - **shadcn/ui** (Radix 기반) 공통 컴포넌트
 - 글로벌 CSS는 `src/index.css`에서만 정의
 - 컴포넌트별 CSS 파일 생성 금지 — Tailwind 유틸리티 클래스 사용
@@ -245,7 +312,7 @@ interface LoginRequest {
 
 ## 8. 다국어 (i18n)
 
-- `src/locale/ko/{domain}.json` — 도메인별 번역 파일
+- 각 앱 `src/locale/ko/common.json` — 앱별 단일 번역 파일
 - `src/locale/config.ts`에서 설정
 - UI 텍스트 하드코딩 금지 — locale 파일에 정의 후 참조
 - 에러 메시지: 백엔드에서 한국어로 반환되므로 그대로 표시 가능
@@ -296,8 +363,11 @@ catch (e) { console.log(e); }
 
 ### 10.4 import 규칙
 
-- 절대 경로 `@/` only — 상대 경로 금지
-- 예: `import { axiosInstance } from '@/lib/axios'`
+- `@/` — 앱 내부 모듈 (`./src/`)
+- `@shared/` — 공유 라이브러리 (`../shared/`)
+- 상대 경로 금지
+- 예: `import { axiosInstance } from '@shared/lib/axios'`
+- 예: `import { useUserData } from '@/hooks/useUserData'`
 
 ### 10.5 editorconfig
 
@@ -310,9 +380,9 @@ catch (e) { console.log(e); }
 1. [ ] GitHub Issue 확인
 2. [ ] 기능 브랜치 생성
 3. [ ] 기존 코드 패턴 확인 후 동일 패턴 적용
-4. [ ] 타입 정의 (`src/types/{domain}/`)
-5. [ ] API 함수 작성 (`src/api/{domain}/`)
-6. [ ] 컴포넌트 구현 (공통: `components/ui/`, 도메인별: `components/features/{domain}/`)
+4. [ ] 타입 정의 (앱: `src/types/`, 공유: `shared/types/`)
+5. [ ] API 함수 작성 (앱: `src/api/`, 공유: `shared/api/`)
+6. [ ] 컴포넌트 구현 (앱: `components/features/` 또는 `components/ui/`, 공유: `shared/components/`)
 7. [ ] 에러 처리: 사용자에게 에러 메시지 표시
 8. [ ] 라우터 등록 (새 페이지인 경우)
 9. [ ] 린트/타입체크 (`pnpm lint && pnpm type-check`)

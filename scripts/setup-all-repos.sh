@@ -15,9 +15,7 @@ REPOS=(
   "backend-chat"
   "backend-llm-gateway"
   "backend-mcp"
-  "frontend-admin"
-  "frontend-chat"
-  "frontend-shared"
+  "frontend"
 )
 
 echo "=========================================="

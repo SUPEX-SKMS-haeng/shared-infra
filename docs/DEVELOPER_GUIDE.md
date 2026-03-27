@@ -14,9 +14,7 @@ agent-template-apps (GitHub Organization)
 ├── backend-chat          ← 채팅/LLM 스트리밍         :8003
 ├── backend-llm-gateway   ← LLM 라우팅/프롬프트관리   :8080
 ├── backend-mcp           ← MCP 도구/벡터DB           :8084
-├── frontend-admin        ← 관리자 대시보드            :3001
-├── frontend-chat         ← 채팅 UI                   :3000
-└── frontend-shared       ← 공통 프론트엔드 컴포넌트 (라이브러리)
+└── frontend              ← 프론트엔드 (admin :3001 / chat :3000)
 ```
 
 모든 앱은 `infra/` 서브모듈로 shared-infra를 참조합니다.
@@ -56,12 +54,12 @@ cd shared-infra
 ║   Agent Template Apps — 개발환경 셋업    ║
 ╚══════════════════════════════════════════╝
 
-[0] 전체 (8개 모두)
+[0] 전체 (7개 모두)
 [1] backend-auth       [2] backend-base       [3] backend-chat
 [4] backend-llm-gateway [5] backend-mcp
-[6] frontend-admin     [7] frontend-chat      [8] frontend-shared
+[6] frontend-chat      [7] frontend-admin
 
-선택 (쉼표로 구분, 예: 1,3,7): _
+선택 (쉼표로 구분, 예: 1,3,6): _
 ```
 
 스크립트가 자동으로 하는 일:
@@ -277,7 +275,7 @@ PR이 생성되면 자동으로:
 ```
 > @task-planner 사용자가 소셜 로그인(Google, Kakao)으로
   회원가입/로그인할 수 있는 기능을 구현해야 해.
-  backend-auth와 frontend-chat에 모두 변경이 필요해.
+  backend-auth와 frontend에 모두 변경이 필요해.
 ```
 
 ### 5.2 태스크 생성

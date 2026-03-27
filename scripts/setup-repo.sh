@@ -108,7 +108,7 @@ if [[ "$REPO_NAME" == backend-* ]]; then
 fi
 
 # 프론트엔드: .prettierrc
-if [[ "$REPO_NAME" == frontend-* ]]; then
+if [[ "$REPO_NAME" == frontend* ]]; then
   if [ -f "${REPO_DIR}/infra/configs/.prettierrc" ]; then
     cp "${REPO_DIR}/infra/configs/.prettierrc" "${REPO_DIR}/.prettierrc"
     echo "  ✓ .prettierrc 복사 (TypeScript/JS 포맷)"
@@ -124,7 +124,7 @@ mkdir -p "${REPO_DIR}/.github/workflows"
 # claude-review.yml 생성 (reusable workflow 호출)
 if [[ "$REPO_NAME" == backend-* ]]; then
   APP_TYPE="backend"
-elif [[ "$REPO_NAME" == frontend-* ]]; then
+elif [[ "$REPO_NAME" == frontend* ]]; then
   APP_TYPE="frontend"
 else
   APP_TYPE=""
@@ -166,7 +166,7 @@ if [[ "$REPO_NAME" == backend-* ]]; then
     cp "${REPO_DIR}/infra/configs/vscode-extensions-backend.json" "${REPO_DIR}/.vscode/extensions.json"
     echo "  ✓ .vscode/extensions.json 복사 (추천 확장 목록)"
   fi
-elif [[ "$REPO_NAME" == frontend-* ]]; then
+elif [[ "$REPO_NAME" == frontend* ]]; then
   if [ -f "${REPO_DIR}/infra/configs/vscode-frontend.json" ]; then
     cp "${REPO_DIR}/infra/configs/vscode-frontend.json" "${REPO_DIR}/.vscode/settings.json"
     echo "  ✓ .vscode/settings.json 복사 (Prettier 자동 포맷)"
@@ -186,7 +186,7 @@ if [[ "$REPO_NAME" == backend-* ]]; then
     cp "${REPO_DIR}/infra/configs/.pre-commit-config-backend.yaml" "${REPO_DIR}/.pre-commit-config.yaml"
     echo "  ✓ .pre-commit-config.yaml 복사 (Ruff 린트/포맷 hook)"
   fi
-elif [[ "$REPO_NAME" == frontend-* ]]; then
+elif [[ "$REPO_NAME" == frontend* ]]; then
   if [ -f "${REPO_DIR}/infra/configs/.pre-commit-config-frontend.yaml" ]; then
     cp "${REPO_DIR}/infra/configs/.pre-commit-config-frontend.yaml" "${REPO_DIR}/.pre-commit-config.yaml"
     echo "  ✓ .pre-commit-config.yaml 복사 (Prettier 포맷 hook)"
@@ -214,9 +214,7 @@ case "$REPO_NAME" in
   backend-chat)         APP_DESC="채팅/LLM 스트리밍"; APP_PORT="8003"; APP_RUN="uv run uvicorn app.main:app --port 8003 --reload" ;;
   backend-llm-gateway)  APP_DESC="LLM 라우팅/프롬프트관리"; APP_PORT="8080"; APP_RUN="uv run uvicorn app.main:app --port 8080 --reload" ;;
   backend-mcp)          APP_DESC="MCP 도구/벡터DB"; APP_PORT="8084"; APP_RUN="uv run uvicorn app.main:app --port 8084 --reload" ;;
-  frontend-admin)       APP_DESC="관리자 대시보드"; APP_PORT="3001"; APP_RUN="pnpm dev" ;;
-  frontend-chat)        APP_DESC="채팅 UI"; APP_PORT="3000"; APP_RUN="pnpm dev" ;;
-  frontend-shared)      APP_DESC="공통 프론트엔드 컴포넌트 (라이브러리)"; APP_PORT="-"; APP_RUN="pnpm build" ;;
+  frontend)             APP_DESC="프론트엔드 (admin :3001 / chat :3000)"; APP_PORT="3000/3001"; APP_RUN="cd chat && pnpm dev  # 또는 cd admin && pnpm dev" ;;
   *)                    APP_DESC=""; APP_PORT=""; APP_RUN="" ;;
 esac
 
@@ -278,7 +276,7 @@ if [[ "$REPO_NAME" == backend-* ]]; then
 echo "  ├── ruff.toml                    ← Python 린트/포맷"
 echo "  ├── .pre-commit-config.yaml      ← 커밋 전 자동 검사"
 fi
-if [[ "$REPO_NAME" == frontend-* ]]; then
+if [[ "$REPO_NAME" == frontend* ]]; then
 echo "  ├── .prettierrc                  ← TS/JS 포맷"
 echo "  ├── .pre-commit-config.yaml      ← 커밋 전 자동 검사"
 fi

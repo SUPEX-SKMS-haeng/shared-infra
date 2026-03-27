@@ -20,7 +20,7 @@ on:
         required: true
         type: string
       app_name:
-        description: "앱 이름 (예: backend-auth, frontend-chat)"
+        description: "앱 이름 (예: backend-auth, frontend)"
         required: true
         type: string
       max_turns:

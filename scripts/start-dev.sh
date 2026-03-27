@@ -8,8 +8,8 @@
 #   ./start-dev.sh                # 대화형 선택
 #   ./start-dev.sh --all          # 전체 (DB + 백엔드 5개 + 프론트 2개)
 #   ./start-dev.sh --backend      # DB + 백엔드 5개
-#   ./start-dev.sh --frontend     # 프론트엔드 2개
-#   ./start-dev.sh 1,3,7          # 번호로 선택
+#   ./start-dev.sh --frontend     # 프론트엔드 2개 (chat + admin)
+#   ./start-dev.sh 1,3,6          # 번호로 선택
 #
 # 종료:
 #   ./start-dev.sh --stop         # 전체 중지
@@ -51,11 +51,11 @@ APP_DIR[backend-mcp]="${PARENT_DIR}/backend-mcp"
 APP_CMD[backend-mcp]="uv run python3 server_sse.py"
 APP_PORT[backend-mcp]="8084"
 
-APP_DIR[frontend-chat]="${PARENT_DIR}/frontend-chat"
+APP_DIR[frontend-chat]="${PARENT_DIR}/frontend/chat"
 APP_CMD[frontend-chat]="pnpm dev"
 APP_PORT[frontend-chat]="3000"
 
-APP_DIR[frontend-admin]="${PARENT_DIR}/frontend-admin"
+APP_DIR[frontend-admin]="${PARENT_DIR}/frontend/admin"
 APP_CMD[frontend-admin]="pnpm dev"
 APP_PORT[frontend-admin]="3001"
 
@@ -206,7 +206,7 @@ select_apps() {
   echo "  [4] backend-llm-gateway   :8080"
   echo "  [5] backend-mcp           :8084  (SSE)"
   echo ""
-  echo "  ── 프론트엔드 ──"
+  echo "  ── 프론트엔드 (frontend 레포) ──"
   echo "  [6] frontend-chat         :3000"
   echo "  [7] frontend-admin        :3001"
   echo ""

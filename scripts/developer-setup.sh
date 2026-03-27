@@ -31,7 +31,7 @@ GITHUB_BASE="https://github.com/${ORG}"
 
 # ── 앱 목록 ──
 BACKEND_REPOS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp")
-FRONTEND_REPOS=("frontend-admin" "frontend-chat" "frontend-shared")
+FRONTEND_REPOS=("frontend")
 ALL_REPOS=("${BACKEND_REPOS[@]}" "${FRONTEND_REPOS[@]}")
 
 # ── 유틸 함수 ──
@@ -181,7 +181,7 @@ select_repos() {
   fi
 
   echo ""
-  echo "  [0] 전체 (8개 모두)"
+  echo "  [0] 전체 (6개 모두)"
   echo ""
   echo "  ── 백엔드 ──"
   echo "  [1] backend-auth          인증/JWT/사용자관리"
@@ -191,9 +191,7 @@ select_repos() {
   echo "  [5] backend-mcp           MCP 도구/벡터DB"
   echo ""
   echo "  ── 프론트엔드 ──"
-  echo "  [6] frontend-admin        관리자 대시보드"
-  echo "  [7] frontend-chat         채팅 UI"
-  echo "  [8] frontend-shared       공통 컴포넌트 (라이브러리)"
+  echo "  [6] frontend              프론트엔드 (관리자+채팅)"
   echo ""
   echo -n "  선택 (쉼표로 구분, 예: 1,3,7): "
   read -r SELECTION
@@ -212,24 +210,10 @@ select_repos() {
         3) SELECTED_REPOS+=("backend-chat") ;;
         4) SELECTED_REPOS+=("backend-llm-gateway") ;;
         5) SELECTED_REPOS+=("backend-mcp") ;;
-        6) SELECTED_REPOS+=("frontend-admin") ;;
-        7) SELECTED_REPOS+=("frontend-chat") ;;
-        8) SELECTED_REPOS+=("frontend-shared") ;;
+        6) SELECTED_REPOS+=("frontend") ;;
         *) warn "알 수 없는 번호: $num (무시)" ;;
       esac
     done
-  fi
-
-  # 프론트엔드 앱 선택 시 frontend-shared 자동 포함
-  local has_frontend=false
-  local has_shared=false
-  for repo in "${SELECTED_REPOS[@]}"; do
-    [[ "$repo" == frontend-admin || "$repo" == frontend-chat ]] && has_frontend=true
-    [[ "$repo" == "frontend-shared" ]] && has_shared=true
-  done
-  if $has_frontend && ! $has_shared; then
-    SELECTED_REPOS+=("frontend-shared")
-    info "frontend-shared 자동 추가 (프론트엔드 앱이 참조함)"
   fi
 
   if [ ${#SELECTED_REPOS[@]} -eq 0 ]; then
@@ -336,7 +320,7 @@ setup_without_submodule() {
     mkdir -p "${base}/.vscode"
     [ -f "${infra}/configs/vscode-backend.json" ] && cp "${infra}/configs/vscode-backend.json" "${base}/.vscode/settings.json"
     [ -f "${infra}/configs/vscode-extensions-backend.json" ] && cp "${infra}/configs/vscode-extensions-backend.json" "${base}/.vscode/extensions.json"
-  elif [[ "$repo" == frontend-* ]]; then
+  elif [[ "$repo" == frontend* ]]; then
     [ -f "${infra}/configs/.prettierrc" ] && cp "${infra}/configs/.prettierrc" "${base}/.prettierrc"
     [ -f "${infra}/configs/.pre-commit-config-frontend.yaml" ] && cp "${infra}/configs/.pre-commit-config-frontend.yaml" "${base}/.pre-commit-config.yaml"
     mkdir -p "${base}/.vscode"
@@ -347,7 +331,7 @@ setup_without_submodule() {
   # claude-review.yml 생성
   local app_type=""
   [[ "$repo" == backend-* ]] && app_type="backend"
-  [[ "$repo" == frontend-* ]] && app_type="frontend"
+  [[ "$repo" == frontend* ]] && app_type="frontend"
   if [ -n "$app_type" ]; then
     cat > "${base}/.github/workflows/claude-review.yml" << YAML_EOF
 name: Claude Code Review
@@ -520,12 +504,6 @@ setup_frontend() {
   local repo=$1
   local base="${WORKSPACE_DIR}/${repo}"
 
-  # frontend-shared는 라이브러리라 별도 실행 없음
-  if [ "$repo" = "frontend-shared" ]; then
-    info "${repo}: 공통 라이브러리 — 의존성 설치 없음 (앱에서 참조)"
-    return
-  fi
-
   header "${repo} — Node.js 환경 셋업"
   cd "$base"
 
@@ -534,23 +512,32 @@ setup_frontend() {
     return
   fi
 
-  # 7-1. 의존성 설치
-  info "pnpm install..."
-  pnpm install --frozen-lockfile 2>&1 | tail -3
-  success "의존성 설치 완료"
+  # 7-1. 의존성 설치 (admin, chat 각각)
+  for app_dir in admin chat; do
+    if [ -d "${base}/${app_dir}" ] && [ -f "${base}/${app_dir}/package.json" ]; then
+      info "${app_dir}/ — pnpm install..."
+      cd "${base}/${app_dir}"
+      pnpm install --frozen-lockfile 2>&1 | tail -3
+      success "${app_dir}: 의존성 설치 완료"
+    fi
+  done
 
   # 7-2. pre-commit 설치 (Python 필요)
+  cd "$base"
   if [ -f "${base}/.pre-commit-config.yaml" ] && command -v pre-commit &>/dev/null; then
     pre-commit install --allow-missing-config 2>/dev/null
     success "pre-commit hook 설치"
   fi
 
-  # 7-3. 빌드 테스트
-  info "빌드 테스트 (pnpm build)..."
-  if pnpm build 2>&1 | tail -3; then
-    success "${repo}: 빌드 성공"
-  else
-    warn "${repo}: 빌드 실패 — 환경 설정을 확인하세요"
+  # 7-3. 빌드 테스트 (admin)
+  if [ -d "${base}/admin" ]; then
+    cd "${base}/admin"
+    info "빌드 테스트 (admin — pnpm build)..."
+    if pnpm build 2>&1 | tail -3; then
+      success "admin: 빌드 성공"
+    else
+      warn "admin: 빌드 실패 — 환경 설정을 확인하세요"
+    fi
   fi
 }
 
@@ -583,7 +570,7 @@ print_summary() {
   local has_frontend=false
   for repo in "${SELECTED_REPOS[@]}"; do
     [[ "$repo" == backend-* ]] && has_backend=true
-    [[ "$repo" == frontend-* && "$repo" != "frontend-shared" ]] && has_frontend=true
+    [[ "$repo" == frontend* ]] && has_frontend=true
   done
 
   if $has_backend; then
@@ -601,8 +588,8 @@ print_summary() {
 
   if $has_frontend; then
     echo -e "  ${CYAN}[프론트엔드 실행]${NC}"
-    echo "  cd ${WORKSPACE_DIR}/frontend-chat"
-    echo "  pnpm dev"
+    echo "  cd ${WORKSPACE_DIR}/frontend/chat && pnpm dev    # 채팅 UI (:3000)"
+    echo "  cd ${WORKSPACE_DIR}/frontend/admin && pnpm dev   # 관리자 (:3001)"
     echo ""
   fi
 
@@ -666,7 +653,7 @@ main() {
   done
 
   for repo in "${SELECTED_REPOS[@]}"; do
-    if [[ "$repo" == frontend-* ]]; then
+    if [[ "$repo" == frontend* ]]; then
       setup_frontend "$repo"
     fi
   done

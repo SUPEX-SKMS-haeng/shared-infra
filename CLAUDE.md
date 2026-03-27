@@ -3,7 +3,7 @@
 ## 프로젝트 구조
 - 멀티 레포: `agent-template-apps` GitHub Organization
 - 백엔드: backend-auth, backend-base, backend-chat, backend-llm-gateway, backend-mcp
-- 프론트엔드: frontend-admin, frontend-chat, frontend-shared
+- 프론트엔드: frontend
 - 공통 인프라: shared-infra (이 레포)
 - 각 앱은 `infra/` 서브모듈로 shared-infra를 참조
 
@@ -87,20 +87,19 @@
 - 글로벌 CSS는 `index.css`에서만 관리
 
 ### 상태관리
-- zustand 스토어 (`src/store/`)
+- jotai 아톰 (`src/store/`)
 - 서버 상태와 클라이언트 상태 분리
 
 ### API 호출 패턴
-- `@shared/lib/axios`의 `axiosInstance` 사용 (baseURL: `/api/v1`)
+- `@shared/lib/axios` 또는 `src/shared/lib/axios`의 `axiosInstance` 사용 (baseURL: `/api/v1`)
 - 스트리밍 응답은 `fetch` + `text/event-stream` 사용
 - API 호출은 반드시 `src/api/` 레이어를 통해 수행 — 컴포넌트에서 직접 호출 금지
 - 서버 에러 응답 형식: `{"success": false, "error": {"code": int, "name": str, "message": str}}`
 - camelCase ↔ snake_case 변환: `@shared/utils/caseConverter` 사용
 
 ### 공통 컴포넌트
-- 공통 UI: `@shared/` (frontend-shared 서브모듈)에서 import
+- 공통 UI: `src/shared/` 디렉토리에서 import
 - 앱 전용 컴포넌트: `src/components/`
-- IMPORTANT: frontend-shared 수정 시 admin, chat 양쪽 앱에서 호환성 확인 필수
 
 ### 다국어
 - `src/locale/` 디렉토리에서 관리

@@ -6,9 +6,9 @@
 #
 # 사용법:
 #   ./start-dev.sh                # 대화형 선택
-#   ./start-dev.sh --all          # 전체 (DB + 백엔드 5개 + 프론트 2개)
+#   ./start-dev.sh --all          # 전체 (DB + 백엔드 5개 + 프론트 1개)
 #   ./start-dev.sh --backend      # DB + 백엔드 5개
-#   ./start-dev.sh --frontend     # 프론트엔드 2개
+#   ./start-dev.sh --frontend     # 프론트엔드
 #   ./start-dev.sh 1,3,7          # 번호로 선택
 #
 # 종료:
@@ -51,17 +51,13 @@ APP_DIR[backend-mcp]="${PARENT_DIR}/backend-mcp"
 APP_CMD[backend-mcp]="uv run python3 server_sse.py"
 APP_PORT[backend-mcp]="8084"
 
-APP_DIR[frontend-chat]="${PARENT_DIR}/frontend-chat"
-APP_CMD[frontend-chat]="pnpm dev"
-APP_PORT[frontend-chat]="3000"
+APP_DIR[frontend]="${PARENT_DIR}/frontend"
+APP_CMD[frontend]="pnpm dev"
+APP_PORT[frontend]="3000"
 
-APP_DIR[frontend-admin]="${PARENT_DIR}/frontend-admin"
-APP_CMD[frontend-admin]="pnpm dev"
-APP_PORT[frontend-admin]="3001"
-
-ALL_APPS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp" "frontend-chat" "frontend-admin")
+ALL_APPS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp" "frontend")
 BACKEND_APPS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp")
-FRONTEND_APPS=("frontend-chat" "frontend-admin")
+FRONTEND_APPS=("frontend")
 
 LOG_DIR="${INFRA_DIR}/.dev-logs"
 PID_FILE="${INFRA_DIR}/.dev-pids"
@@ -188,8 +184,7 @@ select_apps() {
         3) SELECTED_APPS+=("backend-chat") ;;
         4) SELECTED_APPS+=("backend-llm-gateway") ;;
         5) SELECTED_APPS+=("backend-mcp") ;;
-        6) SELECTED_APPS+=("frontend-chat") ;;
-        7) SELECTED_APPS+=("frontend-admin") ;;
+        6) SELECTED_APPS+=("frontend") ;;
       esac
     done
     return
@@ -197,7 +192,7 @@ select_apps() {
 
   # 대화형 선택
   echo ""
-  echo "  [0] 전체 (DB + 백엔드 5개 + 프론트 2개)"
+  echo "  [0] 전체 (DB + 백엔드 5개 + 프론트 1개)"
   echo ""
   echo "  ── 백엔드 ──"
   echo "  [1] backend-auth          :8001"
@@ -207,8 +202,7 @@ select_apps() {
   echo "  [5] backend-mcp           :8084  (SSE)"
   echo ""
   echo "  ── 프론트엔드 ──"
-  echo "  [6] frontend-chat         :3000"
-  echo "  [7] frontend-admin        :3001"
+  echo "  [6] frontend              :3000"
   echo ""
   echo -n "  선택 (쉼표 구분, 예: 1,3,6): "
   read -r SELECTION
@@ -226,8 +220,7 @@ select_apps() {
         3) SELECTED_APPS+=("backend-chat") ;;
         4) SELECTED_APPS+=("backend-llm-gateway") ;;
         5) SELECTED_APPS+=("backend-mcp") ;;
-        6) SELECTED_APPS+=("frontend-chat") ;;
-        7) SELECTED_APPS+=("frontend-admin") ;;
+        6) SELECTED_APPS+=("frontend") ;;
       esac
     done
   fi

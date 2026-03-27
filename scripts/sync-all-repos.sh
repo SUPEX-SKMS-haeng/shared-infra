@@ -32,9 +32,7 @@ REPOS=(
   "backend-chat"
   "backend-llm-gateway"
   "backend-mcp"
-  "frontend-admin"
-  "frontend-chat"
-  "frontend-shared"
+  "frontend"
 )
 
 AUTO_COMMIT=false
@@ -102,7 +100,7 @@ for repo in "${REPOS[@]}"; do
       mkdir -p "$REPO_DIR/.vscode"
       [ -f "$INFRA_DIR/configs/vscode-backend.json" ] && cp "$INFRA_DIR/configs/vscode-backend.json" "$REPO_DIR/.vscode/settings.json"
       [ -f "$INFRA_DIR/configs/vscode-extensions-backend.json" ] && cp "$INFRA_DIR/configs/vscode-extensions-backend.json" "$REPO_DIR/.vscode/extensions.json"
-    elif [[ "$repo" == frontend-* ]]; then
+    elif [[ "$repo" == "frontend" ]]; then
       [ -f "$INFRA_DIR/configs/.prettierrc" ] && cp "$INFRA_DIR/configs/.prettierrc" "$REPO_DIR/"
       [ -f "$INFRA_DIR/configs/.pre-commit-config-frontend.yaml" ] && cp "$INFRA_DIR/configs/.pre-commit-config-frontend.yaml" "$REPO_DIR/.pre-commit-config.yaml"
       mkdir -p "$REPO_DIR/.vscode"

@@ -1,13 +1,13 @@
 # 프론트엔드 개발표준 (React/TypeScript)
 
 이 문서는 agent-template-apps 프론트엔드 서비스의 개발표준을 정의합니다.
-실제 코드에서 추출한 패턴이며, frontend-admin, frontend-chat, frontend-shared에 적용됩니다.
+실제 코드에서 추출한 패턴이며, frontend 레포에 적용됩니다.
 
 ---
 
 ## 1. 프로젝트 구조
 
-### frontend-admin / frontend-chat (앱 레포)
+### frontend (단일 레포)
 
 ```
 src/
@@ -23,31 +23,26 @@ src/
 ├── pages/                 ← 페이지 컴포넌트
 ├── routes/                ← 라우터 설정
 ├── hooks/                 ← 커스텀 hooks
-├── store/                 ← zustand 또는 jotai 스토어
-├── types/                 ← TypeScript 타입 정의
-├── locale/                ← 다국어 설정
-└── shared/ → (서브모듈)   ← frontend-shared 참조
-```
-
-### frontend-shared (공통 라이브러리)
-
-```
-frontend-shared/
-├── api/                   ← 공통 API (auth, group)
-├── components/            ← 공통 컴포넌트 (LoginForm 등)
-├── hooks/                 ← 공통 hooks
 │   ├── useAuth.ts         ← 인증 훅 (로그인/로그아웃)
 │   ├── useAxiosInterceptor.ts  ← axios 인터셉터 (자동 케이스 변환, 401 처리)
 │   └── useFetchInterceptor.ts  ← fetch 인터셉터
-├── lib/
-│   └── axios.ts           ← axiosInstance (baseURL: /api/v1)
-├── store/
-│   └── auth.ts            ← jotai 인증 상태 (userAtom, selectedGroupAtom)
-├── types/
-│   └── auth.ts            ← 인증 관련 타입
-└── utils/
-    ├── caseConverter.ts   ← camelCase ↔ snake_case 변환
-    └── utils.ts           ← 유틸리티 함수
+├── store/                 ← jotai 스토어
+│   └── auth.ts            ← 인증 상태 (userAtom, selectedGroupAtom)
+├── types/                 ← TypeScript 타입 정의
+├── locale/                ← 다국어 설정
+├── shared/                ← 공통 컴포넌트/유틸리티
+│   ├── api/               ← 공통 API (auth, group)
+│   ├── components/        ← 공통 컴포넌트 (LoginForm 등)
+│   ├── hooks/             ← 공통 hooks
+│   ├── lib/
+│   │   └── axios.ts       ← axiosInstance (baseURL: /api/v1)
+│   ├── types/
+│   │   └── auth.ts        ← 인증 관련 타입
+│   └── utils/
+│       ├── caseConverter.ts  ← camelCase ↔ snake_case 변환
+│       └── utils.ts       ← 유틸리티 함수
+└── lib/
+    └── axios.ts           ← axiosInstance (baseURL: /api/v1)
 ```
 
 ---
@@ -127,7 +122,7 @@ LoginForm → useAuth().login() → POST /auth/login → accessToken 저장 → 
 ### 3.3 사용자 상태
 
 ```typescript
-// frontend-shared/store/auth.ts (jotai)
+// src/store/auth.ts (jotai)
 const userAtom = atom<User | null>(null);
 const selectedGroupAtom = atom<GroupInfo | null>(null);
 const userGroupsAtom = atom<GroupInfo[]>([]);
@@ -177,9 +172,8 @@ components/
 └── {도메인}/    ← 기타 도메인별 컴포넌트
 ```
 
-- **공통 UI** (`@shared/components/`): 두 앱 이상에서 사용하는 컴포넌트
-- **앱 전용** (`src/components/`): 해당 앱에서만 사용하는 컴포넌트
-- IMPORTANT: 공통 후보인데 한쪽 앱에만 있는 경우, 필요 시 frontend-shared로 이동
+- **공통 UI** (`src/shared/components/`): 여러 곳에서 재사용하는 컴포넌트
+- **앱 전용** (`src/components/`): 특정 페이지/기능에서만 사용하는 컴포넌트
 
 ---
 
@@ -187,14 +181,12 @@ components/
 
 ### 5.1 라이브러리
 
-- **jotai**: 인증 상태 (frontend-shared에서 사용)
-- **zustand**: 앱별 도메인 상태 (chat 스토어, scroll 스토어 등)
-- 두 라이브러리 혼용 가능하나, 새로 만들 때는 해당 앱의 기존 패턴을 따름
+- **jotai**: 상태관리 (아톰 기반)
 
 ### 5.2 규칙
 
 - 서버 상태 (API 데이터)는 `@tanstack/react-query` 사용 가능 (useAuth에서 이미 사용 중)
-- 클라이언트 상태 (UI 상태)는 zustand 또는 jotai
+- 클라이언트 상태 (UI 상태)는 jotai
 - 전역 상태 남용 금지 — 컴포넌트 로컬 `useState`로 충분하면 전역 스토어 사용하지 않음
 
 ---
@@ -293,4 +285,4 @@ catch (e) { console.log(e); }
 7. [ ] 에러 처리: 사용자에게 에러 메시지 표시
 8. [ ] 라우터 등록 (새 페이지인 경우)
 9. [ ] 린트/타입체크 (`pnpm lint && pnpm type-check`)
-10. [ ] admin/chat 양쪽 호환성 확인 (shared 수정 시)
+10. [ ] 공통 컴포넌트(shared/) 수정 시 영향 범위 확인

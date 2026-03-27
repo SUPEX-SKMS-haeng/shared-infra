@@ -1,5 +1,13 @@
 # 프론트엔드 개발표준 (React/TypeScript)
 
+> **적용 대상**: frontend — admin, chat 2개 앱 + shared 공유 라이브러리 (monorepo)
+> **기술 스택**: React 18.3.0 / TypeScript 5.3.0 / Vite 5.0.0 / Tailwind CSS 3.4.0
+> **UI 컴포넌트**: shadcn/ui (Radix 기반)
+> **상태관리**: jotai + jotai-tanstack-query (atomWithQuery/atomWithMutation)
+> **패키지 관리**: pnpm
+> **린트/포맷**: ESLint (flat config) + Prettier (shared-infra/configs/.prettierrc)
+> **최종 업데이트**: 2026-03-27
+
 이 문서는 agent-template-apps 프론트엔드 서비스의 개발표준을 정의합니다.
 실제 코드에서 추출한 패턴이며, frontend 레포에 적용됩니다.
 
@@ -69,11 +77,16 @@ frontend/                          ← 1개 레포
 ### 2.1 axiosInstance 사용
 
 ```typescript
-// src/api/user.ts
-import { axiosInstance } from '@shared/lib/axios';
+// admin/src/api/user.ts
+import { axiosInstance } from "@shared/lib/axios";
 
-export const getUserList = async (params: { offset: number; limit: number }) => {
-  const { data } = await axiosInstance.get<IUserListResponse>('/auth/user', { params });
+export const getUserList = async (params: {
+  offset: number;
+  limit: number;
+}) => {
+  const { data } = await axiosInstance.get<IUserListResponse>("/auth/user", {
+    params,
+  });
   return data;
 };
 ```
@@ -81,16 +94,18 @@ export const getUserList = async (params: { offset: number; limit: number }) => 
 ### 2.2 규칙
 
 - `axiosInstance`는 `@shared/lib/axios`에서 import (직접 `axios.create` 금지)
-- API 호출 함수는 `src/api/` 디렉토리에만 정의 — 컴포넌트에서 직접 호출 금지
+- API 호출 함수는 각 앱의 `src/api/`에 플랫 파일로 정의 — 컴포넌트에서 직접 호출 금지
 - URL prefix: `/auth/user`, `/chat/simple` 등 (baseURL `/api/v1`이 자동 추가됨)
 - 스트리밍 응답 (SSE): `fetch` + `text/event-stream` 사용 (axios는 스트리밍 미지원)
 
 ### 2.3 케이스 자동 변환
 
 `useAxiosInterceptor`가 자동 처리:
+
 - **요청**: `camelCase` → `snake_case` (params, data)
 - **응답**: `snake_case` → `camelCase` (response.data)
 - FormData는 변환 제외
+- 변환 유틸: `@shared/utils/caseConverter`
 - IMPORTANT: 프론트엔드 코드에서는 항상 camelCase 사용. 백엔드 snake_case를 직접 쓰지 않음
 
 ### 2.4 서버 에러 응답 처리
@@ -109,6 +124,7 @@ export const getUserList = async (params: { offset: number; limit: number }) => 
 ```
 
 프론트엔드에서 에러 처리 시:
+
 ```typescript
 try {
   const result = await someApi();
@@ -142,10 +158,10 @@ LoginForm → useAuth().login() → POST /auth/login → accessToken 저장 → 
 // shared/store/auth.ts (jotai)
 const userAtom = atom<User | null>(null);
 const selectedGroupAtom = atom<GroupInfo | null>(null);
-const userGroupsAtom = atom<GroupInfo[]>([]);
+const isAuthenticatedAtom = atom<boolean>(...);
 ```
 
-- `useAuth()` — 로그인/로그아웃 동작
+- `useAuth()` — 로그인/로그아웃 동작 (`shared/hooks/useAuth.ts`)
 - `useCurrentUser()` — 현재 사용자 정보, isSuperAdmin 판단
 
 ---
@@ -156,15 +172,13 @@ const userGroupsAtom = atom<GroupInfo[]>([]);
 
 ```typescript
 // PascalCase 파일명: UserProfile.tsx
-import { useState } from 'react';
+import { useState } from "react";
 
 interface UserProfileProps {
   userId: string;
-  // ...
 }
 
 const UserProfile = ({ userId }: UserProfileProps) => {
-  // ...
   return <div>...</div>;
 };
 
@@ -174,19 +188,26 @@ export default UserProfile;
 ### 4.2 규칙
 
 - 함수형 컴포넌트 + hooks (클래스 컴포넌트 금지)
+- arrow function only
 - 파일당 하나의 `export default`
 - Props 인터페이스는 컴포넌트 파일 상단에 정의
 - `useEffect`에 cleanup 함수 빠뜨리지 않기
-- 인덱스 파일(`index.ts`)로 barrel export 관리
 
-### 4.3 디렉토리별 컴포넌트 분류
+### 4.3 앱별 컴포넌트 구조
+
+**admin**:
 
 ```
 components/
-├── ui/          ← 범용 UI (DataTable, Modal, Pagination, SearchBar 등)
-├── sidebar/     ← 사이드바 관련
-├── chat/        ← 채팅 도메인 (ChatBubble, MessageInput 등)
-└── {도메인}/    ← 기타 도메인별 컴포넌트
+├── auth/           ← ProtectedRoute
+├── features/       ← 도메인별 기능 컴포넌트
+│   ├── dashboard/
+│   ├── users/
+│   ├── organizations/  ← 하위에 assignments/, members/, prompt/, usage/
+│   └── deployments/
+├── layout/         ← AdminLayout
+├── sidebar/        ← Sidebar, Menus, UserProfile
+└── ui/             ← DataTable, Modal, Pagination, SearchBar, ActionBar 등
 ```
 
 - **공통 UI** (`@shared/components/`): 두 앱 이상에서 사용하는 컴포넌트
@@ -215,8 +236,10 @@ components/
 
 ### 6.1 위치
 
-- `src/types/` — 앱별 도메인 타입
-- `@shared/types/` — 공통 타입 (인증 등)
+- 각 앱 `src/types/` — 앱별 타입, 플랫 파일 구조
+  - admin: `types/user.ts`, `types/organization.ts`, `types/search.ts` 등
+  - chat: `types/chat.ts`, `types/message.ts` 등
+- `shared/types/` — 공유 타입 (`auth.ts` 등)
 
 ### 6.2 네이밍 컨벤션
 
@@ -244,7 +267,8 @@ interface LoginRequest {
 
 ## 7. 스타일링
 
-- **Tailwind CSS** 전용 — 인라인 `style` 금지
+- **Tailwind CSS 3.4.0** 전용 — 인라인 `style` 금지
+- **shadcn/ui** (Radix 기반) 공통 컴포넌트
 - 글로벌 CSS는 `src/index.css`에서만 정의
 - 컴포넌트별 CSS 파일 생성 금지 — Tailwind 유틸리티 클래스 사용
 - 반응형: Tailwind 브레이크포인트 (`sm:`, `md:`, `lg:`) 사용
@@ -253,6 +277,7 @@ interface LoginRequest {
 
 ## 8. 다국어 (i18n)
 
+- 각 앱 `src/locale/ko/common.json` — 앱별 단일 번역 파일
 - `src/locale/config.ts`에서 설정
 - UI 텍스트 하드코딩 금지 — locale 파일에 정의 후 참조
 - 에러 메시지: 백엔드에서 한국어로 반환되므로 그대로 표시 가능
@@ -264,22 +289,11 @@ interface LoginRequest {
 ### 9.1 axios 인터셉터 (글로벌)
 
 `useAxiosInterceptor`에서 처리:
+
 - **401**: localStorage 클리어 → 로그인 페이지 리다이렉트
 - **기타 4XX/5XX**: `Promise.reject(error)` 반환 → 호출부에서 처리
 
-### 9.2 컴포넌트 레벨
-
-```typescript
-// useMutation 에러 처리
-const mutation = useMutation({
-  mutationFn: createUser,
-  onError: (error) => {
-    // error.response.data.error.message 사용자에게 표시
-  },
-});
-```
-
-### 9.3 금지 패턴
+### 9.2 금지 패턴
 
 ```typescript
 // ❌ 에러 무시
@@ -294,14 +308,47 @@ catch (e) { console.log(e); }
 
 ---
 
-## 10. 체크리스트 — 새 기능 개발 시
+## 10. 코드 포맷 & 린트
+
+### 10.1 Prettier
+
+- 공통 설정 파일: `shared-infra/configs/.prettierrc`
+- 포맷: `pnpm prettier --write .` → 저장 시 자동 포맷 권장
+
+### 10.2 ESLint
+
+- flat config 사용
+- 린트: `pnpm lint`
+
+### 10.3 네이밍 규칙
+
+- 변수/함수: `camelCase`
+- 컴포넌트/인터페이스: `PascalCase`
+- 파일명: PascalCase (컴포넌트), camelCase (유틸리티, hooks)
+- 들여쓰기: 2칸
+
+### 10.4 import 규칙
+
+- `@/` — 앱 내부 모듈 (`./src/`)
+- `@shared/` — 공유 라이브러리 (`../shared/`)
+- 상대 경로 금지
+- 예: `import { axiosInstance } from '@shared/lib/axios'`
+- 예: `import { useUserData } from '@/hooks/useUserData'`
+
+### 10.5 editorconfig
+
+- 모든 레포에 `.editorconfig` 적용 — IDE 설정에 의존하지 않고 포맷 통일
+
+---
+
+## 11. 체크리스트 — 새 기능 개발 시
 
 1. [ ] GitHub Issue 확인
 2. [ ] 기능 브랜치 생성
 3. [ ] 기존 코드 패턴 확인 후 동일 패턴 적용
-4. [ ] 타입 정의 (`src/types/`)
-5. [ ] API 함수 작성 (`src/api/`)
-6. [ ] 컴포넌트 구현 (공통은 `@shared/`, 전용은 `src/components/`)
+4. [ ] 타입 정의 (앱: `src/types/`, 공유: `shared/types/`)
+5. [ ] API 함수 작성 (앱: `src/api/`, 공유: `shared/api/`)
+6. [ ] 컴포넌트 구현 (앱: `components/features/` 또는 `components/ui/`, 공유: `shared/components/`)
 7. [ ] 에러 처리: 사용자에게 에러 메시지 표시
 8. [ ] 라우터 등록 (새 페이지인 경우)
 9. [ ] 린트/타입체크 (`pnpm lint && pnpm type-check`)

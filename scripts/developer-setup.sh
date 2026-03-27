@@ -193,7 +193,7 @@ select_repos() {
   echo "  ── 프론트엔드 ──"
   echo "  [6] frontend              프론트엔드 (관리자+채팅)"
   echo ""
-  echo -n "  선택 (쉼표로 구분, 예: 1,3,7): "
+  echo -n "  선택 (쉼표로 구분, 예: 1,3,6): "
   read -r SELECTION
 
   SELECTED_REPOS=()
@@ -234,8 +234,8 @@ clone_shared_infra() {
   if [ -d "${WORKSPACE_DIR}/shared-infra/.git" ]; then
     info "shared-infra 이미 존재 — 최신으로 pull"
     cd "${WORKSPACE_DIR}/shared-infra"
-    git pull --quiet
-    success "shared-infra 업데이트 완료"
+    git pull --quiet 2>/dev/null || warn "shared-infra pull 실패 (트래킹 브랜치 없음 등) — 기존 로컬 상태로 진행"
+    success "shared-infra 확인 완료"
   else
     info "shared-infra 클론 중..."
     git clone --quiet "${GITHUB_BASE}/shared-infra.git" "${WORKSPACE_DIR}/shared-infra"
@@ -252,7 +252,7 @@ clone_app_repo() {
   if [ -d "${WORKSPACE_DIR}/${repo}/.git" ]; then
     info "${repo}: 이미 존재 — pull"
     cd "${WORKSPACE_DIR}/${repo}"
-    git pull --quiet
+    git pull --quiet 2>/dev/null || warn "${repo}: pull 실패 — 기존 로컬 상태로 진행"
     git submodule update --init --recursive --quiet 2>/dev/null || true
   else
     info "${repo}: 클론 중..."

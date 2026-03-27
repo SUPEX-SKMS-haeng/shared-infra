@@ -6,7 +6,7 @@
 #
 # 사용법:
 #   ./start-dev.sh                # 대화형 선택
-#   ./start-dev.sh --all          # 전체 (DB + 백엔드 5개 + 프론트 2개)
+#   ./start-dev.sh --all          # 전체 (DB + 백엔드 5개 + 프론트 1개)
 #   ./start-dev.sh --backend      # DB + 백엔드 5개
 #   ./start-dev.sh --frontend     # 프론트엔드 2개 (chat + admin)
 #   ./start-dev.sh 1,3,6          # 번호로 선택
@@ -61,7 +61,7 @@ APP_PORT[frontend-admin]="3001"
 
 ALL_APPS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp" "frontend-chat" "frontend-admin")
 BACKEND_APPS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp")
-FRONTEND_APPS=("frontend-chat" "frontend-admin")
+FRONTEND_APPS=("frontend")
 
 LOG_DIR="${INFRA_DIR}/.dev-logs"
 PID_FILE="${INFRA_DIR}/.dev-pids"
@@ -188,8 +188,7 @@ select_apps() {
         3) SELECTED_APPS+=("backend-chat") ;;
         4) SELECTED_APPS+=("backend-llm-gateway") ;;
         5) SELECTED_APPS+=("backend-mcp") ;;
-        6) SELECTED_APPS+=("frontend-chat") ;;
-        7) SELECTED_APPS+=("frontend-admin") ;;
+        6) SELECTED_APPS+=("frontend") ;;
       esac
     done
     return
@@ -197,7 +196,7 @@ select_apps() {
 
   # 대화형 선택
   echo ""
-  echo "  [0] 전체 (DB + 백엔드 5개 + 프론트 2개)"
+  echo "  [0] 전체 (DB + 백엔드 5개 + 프론트 1개)"
   echo ""
   echo "  ── 백엔드 ──"
   echo "  [1] backend-auth          :8001"
@@ -226,8 +225,7 @@ select_apps() {
         3) SELECTED_APPS+=("backend-chat") ;;
         4) SELECTED_APPS+=("backend-llm-gateway") ;;
         5) SELECTED_APPS+=("backend-mcp") ;;
-        6) SELECTED_APPS+=("frontend-chat") ;;
-        7) SELECTED_APPS+=("frontend-admin") ;;
+        6) SELECTED_APPS+=("frontend") ;;
       esac
     done
   fi

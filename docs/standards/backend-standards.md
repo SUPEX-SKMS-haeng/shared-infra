@@ -1,7 +1,23 @@
 # 백엔드 개발표준 (Python/FastAPI)
 
+> **적용 대상**: backend-auth, backend-base, backend-chat, backend-llm-gateway, backend-mcp
+> **기술 스택**: Python 3.12 / FastAPI / SQLAlchemy / Pydantic v2
+> **패키지 관리**: uv (pyproject.toml)
+> **린트/포맷**: ruff (shared-infra/configs/ruff.toml)
+> **최종 업데이트**: 2026-03-27
+
 이 문서는 agent-template-apps 백엔드 서비스의 개발표준을 정의합니다.
 실제 코드에서 추출한 패턴이며, 모든 백엔드 서비스(auth, base, chat, llm-gateway, mcp)에 적용됩니다.
+
+---
+
+## 0. 개발 환경
+
+- 패키지 관리: `uv` (pyproject.toml)
+- 테스트: `uv run pytest --tb=short -q`
+- 린트: `uv run ruff check .`
+- 포맷: `uv run ruff format .`
+- 타입체크: `uv run mypy .`
 
 ---
 
@@ -249,6 +265,11 @@ def get_setting():
 - 새 설정 추가 시 반드시 기본값 제공
 - 서비스 고유 설정은 해당 서비스의 config.py에만 추가
 
+### 5.3 서비스별 독립 관리 원칙
+
+- 각 서비스의 `config.py`, `logging.py`, `error/*`, `security.py`, `database.py`는 서비스별 독립 관리 (공통 패키지로 추출하지 않음)
+- 에러 코드 번호 체계와 API 응답 형식만 전체 서비스 공통 규약으로 유지
+
 ---
 
 ## 6. DB 패턴
@@ -383,7 +404,31 @@ class UserOrganizationRole(BaseModel):
 
 ---
 
-## 10. 체크리스트 — 새 기능 개발 시
+## 10. 코드 포맷 & 린트
+
+### 10.1 ruff 설정
+
+- 공통 설정 파일: `shared-infra/configs/ruff.toml`
+- 린트: `uv run ruff check .` → 커밋 전 반드시 통과
+- 포맷: `uv run ruff format .` → 저장 시 자동 포맷 권장
+- import 정렬: ruff isort 규칙 자동 적용 (별도 isort 불필요)
+- print() 감지: T20 규칙으로 print 사용 시 경고
+- 보안 감지: S 규칙(bandit)으로 하드코딩 시크릿 등 감지
+
+### 10.2 네이밍 규칙
+
+- 변수/함수: `snake_case`
+- 클래스: `PascalCase`
+- 상수: `UPPER_CASE`
+- 들여쓰기: 4칸
+
+### 10.3 editorconfig
+
+- 모든 레포에 `.editorconfig` 적용 — IDE 설정에 의존하지 않고 포맷 통일
+
+---
+
+## 11. 체크리스트 — 새 기능 개발 시
 
 1. [ ] GitHub Issue 확인 (요구사항, 수락 기준)
 2. [ ] 기능 브랜치 생성 (`feat/{앱약어}/{이슈번호}-{설명}`)

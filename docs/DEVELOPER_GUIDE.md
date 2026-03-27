@@ -26,15 +26,15 @@ agent-template-apps (GitHub Organization)
 
 ### 2.1 사전 요구사항
 
-| 도구 | 버전 | 용도 |
-|------|------|------|
-| Git | 최신 | 소스 관리 |
-| Python | >= 3.12 | 백엔드 |
-| uv | 최신 | Python 패키지 관리 |
-| Node.js | >= 20 | 프론트엔드 |
-| pnpm | 최신 | Node 패키지 관리 |
-| Docker | 최신 | 로컬 DB (PostgreSQL, Redis) |
-| Claude Code | 최신 | AI 기반 개발 (`npm install -g @anthropic-ai/claude-code`) |
+| 도구        | 버전    | 용도                                                      |
+| ----------- | ------- | --------------------------------------------------------- |
+| Git         | 최신    | 소스 관리                                                 |
+| Python      | >= 3.12 | 백엔드                                                    |
+| uv          | 최신    | Python 패키지 관리                                        |
+| Node.js     | >= 20   | 프론트엔드                                                |
+| pnpm        | 최신    | Node 패키지 관리                                          |
+| Docker      | 최신    | 로컬 DB (PostgreSQL, Redis)                               |
+| Claude Code | 최신    | AI 기반 개발 (`npm install -g @anthropic-ai/claude-code`) |
 
 ### 2.2 자동 셋업 (권장)
 
@@ -116,14 +116,14 @@ backend-auth/
 ```bash
 cd ~/Workspace/GitHub/shared-infra
 
-# 전체 기동 (DB + 백엔드 5개 + 프론트 2개)
+# 전체 기동 (DB + 백엔드 5개 + 프론트 1개)
 ./scripts/start-dev.sh --all
 
 # 백엔드만
 ./scripts/start-dev.sh --backend
 
 # 원하는 앱만
-./scripts/start-dev.sh 1,3,6         # auth + chat + frontend-chat
+./scripts/start-dev.sh 1,3,6         # auth + chat + frontend
 
 # 상태 확인
 ./scripts/start-dev.sh --status
@@ -133,6 +133,7 @@ cd ~/Workspace/GitHub/shared-infra
 ```
 
 start-dev.sh는 다음을 자동으로 합니다:
+
 - Docker로 PostgreSQL(:5432) + Redis(:6379) 기동 (이미 떠있으면 건너뜀)
 - 선택한 앱을 백그라운드로 실행
 - 각 앱의 로그는 `.dev-logs/` 디렉토리에 저장
@@ -186,6 +187,7 @@ claude                    # Claude Code 시작
 ```
 
 `/start-task`가 하는 일:
+
 - GitHub Issue #42 내용 확인
 - 작업 브랜치 생성 (`feat/auth/42-add-oauth`)
 - 이슈에 작업 시작 코멘트 추가
@@ -195,6 +197,7 @@ claude                    # Claude Code 시작
 Claude Code 또는 VS Code로 개발합니다 (혼용 가능).
 
 Claude Code로 작업:
+
 ```
 > 이슈 내용 기반으로 OAuth2 구글 로그인 엔드포인트를 구현해줘.
 > @code-reviewer 지금까지 변경된 코드 리뷰해줘
@@ -202,6 +205,7 @@ Claude Code로 작업:
 ```
 
 VS Code로 작업:
+
 - 저장(Ctrl+S) 시 자동 포맷 (Ruff/Prettier)
 - 코드 작성 → 저장 → 자동으로 import 정렬, 따옴표 통일, 줄 길이 조정
 
@@ -303,11 +307,11 @@ GitHub Issues 상태 변경 시 Notion에 자동 반영됩니다 (`sync-notion.y
 
 VS Code로 프로젝트를 열면 "추천 확장을 설치하시겠습니까?" 알림이 뜹니다.
 
-| 역할 | 백엔드 | 프론트엔드 |
-|------|--------|-----------|
-| 포맷터 | Ruff (`charliermarsh.ruff`) | Prettier (`esbenp.prettier-vscode`) |
-| 린터 | Ruff (내장) | ESLint (`dbaeumer.vscode-eslint`) |
-| 에디터 | EditorConfig (`editorconfig.editorconfig`) | 동일 |
+| 역할   | 백엔드                                     | 프론트엔드                          |
+| ------ | ------------------------------------------ | ----------------------------------- |
+| 포맷터 | Ruff (`charliermarsh.ruff`)                | Prettier (`esbenp.prettier-vscode`) |
+| 린터   | Ruff (내장)                                | ESLint (`dbaeumer.vscode-eslint`)   |
+| 에디터 | EditorConfig (`editorconfig.editorconfig`) | 동일                                |
 
 확장 설치 후 파일 저장(Ctrl+S) 시 자동 포맷됩니다.
 
@@ -327,13 +331,13 @@ Claude PR 리뷰가 코드 품질/포맷을 추가 검사합니다 (1~2단계에
 
 ### 6.4 설정 파일 위치
 
-| 파일 | 원본 (shared-infra) | 앱 레포 (복사본) |
-|------|---------------------|-----------------|
-| `ruff.toml` | `configs/ruff.toml` | `./ruff.toml` |
-| `.prettierrc` | `configs/.prettierrc` | `./.prettierrc` |
-| `.editorconfig` | `configs/.editorconfig` | `./.editorconfig` |
-| VS Code 설정 | `configs/vscode-*.json` | `.vscode/settings.json` |
-| pre-commit | `configs/.pre-commit-config-*.yaml` | `.pre-commit-config.yaml` |
+| 파일            | 원본 (shared-infra)                 | 앱 레포 (복사본)          |
+| --------------- | ----------------------------------- | ------------------------- |
+| `ruff.toml`     | `configs/ruff.toml`                 | `./ruff.toml`             |
+| `.prettierrc`   | `configs/.prettierrc`               | `./.prettierrc`           |
+| `.editorconfig` | `configs/.editorconfig`             | `./.editorconfig`         |
+| VS Code 설정    | `configs/vscode-*.json`             | `.vscode/settings.json`   |
+| pre-commit      | `configs/.pre-commit-config-*.yaml` | `.pre-commit-config.yaml` |
 
 설정을 수정하려면 shared-infra의 `configs/`에서 원본을 수정 → `sync-all-repos.sh`로 전체 반영.
 
@@ -367,6 +371,7 @@ git add -A && git commit -m "chore: update ruff rules" && git push
 ```
 
 개별 앱에서 수동으로 반영:
+
 ```bash
 cd backend-auth
 git submodule update --remote infra
@@ -379,22 +384,22 @@ git submodule update --remote infra
 
 ### 9.1 컨텍스트 관리
 
-| 상황 | 명령 |
-|------|------|
-| 작업 전환 시 리셋 | `/clear` |
-| 이전 세션 이어서 | `claude --continue` |
-| 세션 목록에서 선택 | `claude --resume` |
+| 상황               | 명령                |
+| ------------------ | ------------------- |
+| 작업 전환 시 리셋  | `/clear`            |
+| 이전 세션 이어서   | `claude --continue` |
+| 세션 목록에서 선택 | `claude --resume`   |
 
 ### 9.2 작업 패턴별 권장 방법
 
-| 상황 | 방법 |
-|------|------|
-| 단순 수정 | Claude에 바로 요청 |
+| 상황                 | 방법                                     |
+| -------------------- | ---------------------------------------- |
+| 단순 수정            | Claude에 바로 요청                       |
 | 새 엔드포인트/페이지 | Plan Mode (Shift+Tab) → 계획 확인 → 구현 |
-| 복잡한 기능 | `@task-planner`로 분해 → 단위별 구현 |
-| 버그 수정 | 에러 로그 붙여넣기 → Claude 분석/수정 |
-| 코드 리뷰 | `@code-reviewer` |
-| 테스트 실행 | `@test-runner` |
+| 복잡한 기능          | `@task-planner`로 분해 → 단위별 구현     |
+| 버그 수정            | 에러 로그 붙여넣기 → Claude 분석/수정    |
+| 코드 리뷰            | `@code-reviewer`                         |
+| 테스트 실행          | `@test-runner`                           |
 
 ### 9.3 CLAUDE.md 구조
 
@@ -410,13 +415,13 @@ Claude Code는 프로젝트 루트의 `CLAUDE.md`와 `infra/CLAUDE.md`를 모두
 
 ## 10. 스크립트 요약
 
-| 스크립트 | 언제 | 누가 | 하는 일 |
-|----------|------|------|---------|
-| `developer-setup.sh` | 최초 1회 | 새 개발자 | 클론 → DB → venv → 의존성 → 실행 확인 |
-| `start-dev.sh` | 매일 | 모든 개발자 | DB + 앱 기동/중지/상태 확인 |
-| `sync-all-repos.sh` | shared-infra 변경 시 | PL | 전체 앱 설정 재배포 |
-| `setup-repo.sh` | 서브모듈 연결 후 | 개발자 | 단일 앱 설정 배포 |
-| `setup-all-repos.sh` | 서브모듈 연결 후 | PL | 전체 앱 설정 배포 |
+| 스크립트             | 언제                 | 누가        | 하는 일                               |
+| -------------------- | -------------------- | ----------- | ------------------------------------- |
+| `developer-setup.sh` | 최초 1회             | 새 개발자   | 클론 → DB → venv → 의존성 → 실행 확인 |
+| `start-dev.sh`       | 매일                 | 모든 개발자 | DB + 앱 기동/중지/상태 확인           |
+| `sync-all-repos.sh`  | shared-infra 변경 시 | PL          | 전체 앱 설정 재배포                   |
+| `setup-repo.sh`      | 서브모듈 연결 후     | 개발자      | 단일 앱 설정 배포                     |
+| `setup-all-repos.sh` | 서브모듈 연결 후     | PL          | 전체 앱 설정 배포                     |
 
 ---
 
@@ -431,16 +436,16 @@ Claude Code는 프로젝트 루트의 `CLAUDE.md`와 `infra/CLAUDE.md`를 모두
 
 ### 11.2 Notion 데이터베이스 속성
 
-| 속성 | 타입 | 설명 |
-|------|------|------|
-| Name | Title | 이슈 제목 |
-| Issue Number | Number | GitHub 이슈 번호 |
-| Status | Select | To Do / In Progress / In Review / Done |
-| Priority | Select | High / Medium / Low |
-| Assignee | Text | 담당자 |
-| Labels | Multi-select | 라벨 |
-| Repository | Select | 레포 이름 |
-| URL | URL | GitHub 이슈 링크 |
+| 속성         | 타입         | 설명                                   |
+| ------------ | ------------ | -------------------------------------- |
+| Name         | Title        | 이슈 제목                              |
+| Issue Number | Number       | GitHub 이슈 번호                       |
+| Status       | Select       | To Do / In Progress / In Review / Done |
+| Priority     | Select       | High / Medium / Low                    |
+| Assignee     | Text         | 담당자                                 |
+| Labels       | Multi-select | 라벨                                   |
+| Repository   | Select       | 레포 이름                              |
+| URL          | URL          | GitHub 이슈 링크                       |
 
 ### 11.3 GitHub Secrets 설정
 
@@ -459,17 +464,20 @@ gh secret set ANTHROPIC_API_KEY --org agent-template-apps --body "sk-ant-xxx"
 ## 12. 트러블슈팅
 
 ### 서브모듈 infra/가 비어있음
+
 ```bash
 git submodule update --init --recursive
 ```
 
 ### pre-commit이 동작하지 않음
+
 ```bash
 pip install pre-commit
 pre-commit install
 ```
 
 ### 앱 시작 시 DB 연결 실패
+
 ```bash
 # DB 상태 확인
 docker compose -f shared-infra/docker-compose.dev.yml ps
@@ -478,11 +486,13 @@ docker compose -f shared-infra/docker-compose.dev.yml up -d
 ```
 
 ### .env 파일이 없음
+
 ```bash
 cp .env.example .env
 # 로컬 DB를 docker-compose로 띄웠다면 기본값 그대로 사용 가능
 ```
 
 ### VS Code에서 자동 포맷이 안 됨
+
 - 추천 확장 설치 확인 (VS Code 알림 또는 `.vscode/extensions.json` 참고)
 - `Ctrl+Shift+P` → "Format Document" 수동 실행 후 기본 포맷터 선택

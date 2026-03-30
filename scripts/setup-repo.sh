@@ -214,7 +214,7 @@ case "$REPO_NAME" in
   backend-chat)         APP_DESC="채팅/LLM 스트리밍"; APP_PORT="8003"; APP_RUN="uv run uvicorn app.main:app --port 8003 --reload" ;;
   backend-llm-gateway)  APP_DESC="LLM 라우팅/프롬프트관리"; APP_PORT="8080"; APP_RUN="uv run uvicorn app.main:app --port 8080 --reload" ;;
   backend-mcp)          APP_DESC="MCP 도구/벡터DB"; APP_PORT="8084"; APP_RUN="uv run uvicorn app.main:app --port 8084 --reload" ;;
-  frontend)             APP_DESC="프론트엔드 (React/Vite)"; APP_PORT="3000"; APP_RUN="pnpm dev" ;;
+  frontend)             APP_DESC="프론트엔드 (admin :3001 / chat :3000)"; APP_PORT="3000/3001"; APP_RUN="cd chat && pnpm dev  # 또는 cd admin && pnpm dev" ;;
   *)                    APP_DESC=""; APP_PORT=""; APP_RUN="" ;;
 esac
 

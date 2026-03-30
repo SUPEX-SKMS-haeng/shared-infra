@@ -191,7 +191,7 @@ select_repos() {
   echo "  [5] backend-mcp           MCP 도구/벡터DB"
   echo ""
   echo "  ── 프론트엔드 ──"
-  echo "  [6] frontend              프론트엔드 (React/Vite)"
+  echo "  [6] frontend              프론트엔드 (관리자+채팅)"
   echo ""
   echo -n "  선택 (쉼표로 구분, 예: 1,3,6): "
   read -r SELECTION
@@ -320,7 +320,7 @@ setup_without_submodule() {
     mkdir -p "${base}/.vscode"
     [ -f "${infra}/configs/vscode-backend.json" ] && cp "${infra}/configs/vscode-backend.json" "${base}/.vscode/settings.json"
     [ -f "${infra}/configs/vscode-extensions-backend.json" ] && cp "${infra}/configs/vscode-extensions-backend.json" "${base}/.vscode/extensions.json"
-  elif [[ "$repo" == "frontend" ]]; then
+  elif [[ "$repo" == frontend* ]]; then
     [ -f "${infra}/configs/.prettierrc" ] && cp "${infra}/configs/.prettierrc" "${base}/.prettierrc"
     [ -f "${infra}/configs/.pre-commit-config-frontend.yaml" ] && cp "${infra}/configs/.pre-commit-config-frontend.yaml" "${base}/.pre-commit-config.yaml"
     mkdir -p "${base}/.vscode"
@@ -331,7 +331,7 @@ setup_without_submodule() {
   # claude-review.yml 생성
   local app_type=""
   [[ "$repo" == backend-* ]] && app_type="backend"
-  [[ "$repo" == "frontend" ]] && app_type="frontend"
+  [[ "$repo" == frontend* ]] && app_type="frontend"
   if [ -n "$app_type" ]; then
     cat > "${base}/.github/workflows/claude-review.yml" << YAML_EOF
 name: Claude Code Review
@@ -512,23 +512,32 @@ setup_frontend() {
     return
   fi
 
-  # 7-1. 의존성 설치
-  info "pnpm install..."
-  pnpm install --frozen-lockfile 2>&1 | tail -3
-  success "의존성 설치 완료"
+  # 7-1. 의존성 설치 (admin, chat 각각)
+  for app_dir in admin chat; do
+    if [ -d "${base}/${app_dir}" ] && [ -f "${base}/${app_dir}/package.json" ]; then
+      info "${app_dir}/ — pnpm install..."
+      cd "${base}/${app_dir}"
+      pnpm install --frozen-lockfile 2>&1 | tail -3
+      success "${app_dir}: 의존성 설치 완료"
+    fi
+  done
 
   # 7-2. pre-commit 설치 (Python 필요)
+  cd "$base"
   if [ -f "${base}/.pre-commit-config.yaml" ] && command -v pre-commit &>/dev/null; then
     pre-commit install --allow-missing-config 2>/dev/null
     success "pre-commit hook 설치"
   fi
 
-  # 7-3. 빌드 테스트
-  info "빌드 테스트 (pnpm build)..."
-  if pnpm build 2>&1 | tail -3; then
-    success "${repo}: 빌드 성공"
-  else
-    warn "${repo}: 빌드 실패 — 환경 설정을 확인하세요"
+  # 7-3. 빌드 테스트 (admin)
+  if [ -d "${base}/admin" ]; then
+    cd "${base}/admin"
+    info "빌드 테스트 (admin — pnpm build)..."
+    if pnpm build 2>&1 | tail -3; then
+      success "admin: 빌드 성공"
+    else
+      warn "admin: 빌드 실패 — 환경 설정을 확인하세요"
+    fi
   fi
 }
 
@@ -561,7 +570,7 @@ print_summary() {
   local has_frontend=false
   for repo in "${SELECTED_REPOS[@]}"; do
     [[ "$repo" == backend-* ]] && has_backend=true
-    [[ "$repo" == "frontend" ]] && has_frontend=true
+    [[ "$repo" == frontend* ]] && has_frontend=true
   done
 
   if $has_backend; then
@@ -579,8 +588,8 @@ print_summary() {
 
   if $has_frontend; then
     echo -e "  ${CYAN}[프론트엔드 실행]${NC}"
-    echo "  cd ${WORKSPACE_DIR}/frontend"
-    echo "  pnpm dev"
+    echo "  cd ${WORKSPACE_DIR}/frontend/chat && pnpm dev    # 채팅 UI (:3000)"
+    echo "  cd ${WORKSPACE_DIR}/frontend/admin && pnpm dev   # 관리자 (:3001)"
     echo ""
   fi
 
@@ -644,7 +653,7 @@ main() {
   done
 
   for repo in "${SELECTED_REPOS[@]}"; do
-    if [[ "$repo" == "frontend" ]]; then
+    if [[ "$repo" == frontend* ]]; then
       setup_frontend "$repo"
     fi
   done

@@ -8,8 +8,8 @@
 #   ./start-dev.sh                # 대화형 선택
 #   ./start-dev.sh --all          # 전체 (DB + 백엔드 5개 + 프론트 1개)
 #   ./start-dev.sh --backend      # DB + 백엔드 5개
-#   ./start-dev.sh --frontend     # 프론트엔드
-#   ./start-dev.sh 1,3,7          # 번호로 선택
+#   ./start-dev.sh --frontend     # 프론트엔드 2개 (chat + admin)
+#   ./start-dev.sh 1,3,6          # 번호로 선택
 #
 # 종료:
 #   ./start-dev.sh --stop         # 전체 중지
@@ -51,11 +51,15 @@ APP_DIR[backend-mcp]="${PARENT_DIR}/backend-mcp"
 APP_CMD[backend-mcp]="uv run python3 server_sse.py"
 APP_PORT[backend-mcp]="8084"
 
-APP_DIR[frontend]="${PARENT_DIR}/frontend"
-APP_CMD[frontend]="pnpm dev"
-APP_PORT[frontend]="3000"
+APP_DIR[frontend-chat]="${PARENT_DIR}/frontend/chat"
+APP_CMD[frontend-chat]="pnpm dev"
+APP_PORT[frontend-chat]="3000"
 
-ALL_APPS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp" "frontend")
+APP_DIR[frontend-admin]="${PARENT_DIR}/frontend/admin"
+APP_CMD[frontend-admin]="pnpm dev"
+APP_PORT[frontend-admin]="3001"
+
+ALL_APPS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp" "frontend-chat" "frontend-admin")
 BACKEND_APPS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp")
 FRONTEND_APPS=("frontend")
 
@@ -201,8 +205,9 @@ select_apps() {
   echo "  [4] backend-llm-gateway   :8080"
   echo "  [5] backend-mcp           :8084  (SSE)"
   echo ""
-  echo "  ── 프론트엔드 ──"
-  echo "  [6] frontend              :3000"
+  echo "  ── 프론트엔드 (frontend 레포) ──"
+  echo "  [6] frontend-chat         :3000"
+  echo "  [7] frontend-admin        :3001"
   echo ""
   echo -n "  선택 (쉼표 구분, 예: 1,3,6): "
   read -r SELECTION

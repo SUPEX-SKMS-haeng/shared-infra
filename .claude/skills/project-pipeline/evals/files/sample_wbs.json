@@ -1,0 +1,74 @@
+{
+  "wbs": [
+    {
+      "no": 1,
+      "level1": "사용자 관리",
+      "level2": "인증",
+      "level3": "로그인",
+      "level4": "이메일 로그인 API",
+      "description": "이메일/비밀번호 로그인, JWT 토큰 발급",
+      "repos": "backend-auth",
+      "notes": ""
+    },
+    {
+      "no": 2,
+      "level1": "사용자 관리",
+      "level2": "인증",
+      "level3": "로그인",
+      "level4": "이메일 로그인 UI",
+      "description": "로그인 페이지 UI 구현",
+      "repos": "frontend-chat",
+      "notes": ""
+    },
+    {
+      "no": 3,
+      "level1": "사용자 관리",
+      "level2": "인증",
+      "level3": "로그인",
+      "level4": "Google OAuth2 API",
+      "description": "Google OAuth2 소셜 로그인 연동",
+      "repos": "backend-auth",
+      "notes": "Google Cloud 설정 필요"
+    },
+    {
+      "no": 4,
+      "level1": "사용자 관리",
+      "level2": "인증",
+      "level3": "로그인",
+      "level4": "Google 로그인 UI",
+      "description": "소셜 로그인 버튼 및 콜백 처리 UI",
+      "repos": "frontend-chat",
+      "notes": ""
+    },
+    {
+      "no": 5,
+      "level1": "채팅",
+      "level2": "LLM 채팅",
+      "level3": "대화 관리",
+      "level4": "대화 CRUD API",
+      "description": "대화 생성, 목록 조회, 삭제 API",
+      "repos": "backend-chat",
+      "notes": ""
+    },
+    {
+      "no": 6,
+      "level1": "채팅",
+      "level2": "LLM 채팅",
+      "level3": "대화 관리",
+      "level4": "메시지 스트리밍 API",
+      "description": "LLM에 메시지 전송, SSE 스트리밍 수신",
+      "repos": "backend-chat, backend-llm-gateway",
+      "notes": "AI 모델 연동"
+    },
+    {
+      "no": 7,
+      "level1": "채팅",
+      "level2": "LLM 채팅",
+      "level3": "대화 관리",
+      "level4": "채팅 UI",
+      "description": "채팅 인터페이스 UI 구현",
+      "repos": "frontend-chat",
+      "notes": ""
+    }
+  ]
+}

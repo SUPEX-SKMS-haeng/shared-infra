@@ -1,0 +1,49 @@
+{
+  "requirements": [
+    {
+      "req_id": "FR-001",
+      "req_type": "기능",
+      "category_l1": "사용자 관리",
+      "category_l2": "인증",
+      "category_l3": "로그인",
+      "req_name": "이메일 로그인",
+      "description": "이메일/비밀번호 로그인, JWT 토큰 발급",
+      "priority": "High",
+      "notes": "backend-auth, frontend-chat"
+    },
+    {
+      "req_id": "FR-002",
+      "req_type": "기능",
+      "category_l1": "사용자 관리",
+      "category_l2": "인증",
+      "category_l3": "로그인",
+      "req_name": "소셜 로그인 (Google)",
+      "description": "Google OAuth2 소셜 로그인",
+      "priority": "High",
+      "notes": "backend-auth, frontend-chat. Google Cloud 설정 필요"
+    },
+    {
+      "req_id": "FR-003",
+      "req_type": "기능",
+      "category_l1": "채팅",
+      "category_l2": "LLM 채팅",
+      "category_l3": "대화 관리",
+      "req_name": "대화 생성/조회",
+      "description": "대화 생성, 목록 조회, 제목 자동 생성",
+      "priority": "High",
+      "notes": "backend-chat, frontend-chat"
+    },
+    {
+      "req_id": "FR-004",
+      "req_type": "기능",
+      "category_l1": "채팅",
+      "category_l2": "LLM 채팅",
+      "category_l3": "대화 관리",
+      "req_name": "메시지 전송/스트리밍",
+      "description": "LLM에 메시지 전송, SSE 스트리밍 수신",
+      "priority": "High",
+      "notes": "backend-chat, backend-llm-gateway, frontend-chat"
+    }
+  ],
+  "total": 4
+}

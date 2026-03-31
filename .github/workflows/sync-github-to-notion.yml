@@ -1,0 +1,128 @@
+# GitHub → 노션 단방향 동기화 (즉시)
+# GitHub Issue가 생성/수정/닫힐 때 노션 DB에 반영
+name: Sync GitHub to Notion
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened, assigned, unassigned, labeled, unlabeled]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # sync-bot 라벨이 있으면 스킵 (노션→GitHub 동기화에 의한 변경)
+    if: "!contains(github.event.issue.labels.*.name, 'sync-bot')"
+
+    steps:
+      - name: Sync Issue to Notion
+        uses: actions/github-script@v7
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const repo = context.repo.repo;
+            const notionApiKey = process.env.NOTION_API_KEY;
+            const notionDbId = process.env.NOTION_DATABASE_ID;
+
+            // 노션 DB에서 해당 Issue 번호로 기존 페이지 검색
+            const searchRes = await fetch(`https://api.notion.com/v1/databases/${notionDbId}/query`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${notionApiKey}`,
+                'Notion-Version': '2022-06-28',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                filter: {
+                  and: [
+                    { property: 'Issue Number', number: { equals: issue.number } },
+                    { property: 'Repository', select: { equals: repo } }
+                  ]
+                }
+              })
+            });
+            const searchData = await searchRes.json();
+
+            // 상태 매핑: GitHub → 노션
+            let status = 'To Do';
+            if (issue.state === 'closed') {
+              status = 'Done';
+            } else if (issue.labels?.some(l => l.name === 'in-progress')) {
+              status = 'In Progress';
+            } else if (issue.pull_request || issue.labels?.some(l => l.name === 'in-review')) {
+              status = 'In Review';
+            }
+
+            // 우선순위 매핑
+            let priority = 'Medium';
+            if (issue.labels?.some(l => l.name === 'priority:high')) priority = 'High';
+            if (issue.labels?.some(l => l.name === 'priority:low')) priority = 'Low';
+
+            // 노션 페이지 속성
+            const properties = {
+              'Name': { title: [{ text: { content: issue.title } }] },
+              'Status': { select: { name: status } },
+              'Priority': { select: { name: priority } },
+              'Repository': { select: { name: repo } },
+              'Issue Number': { number: issue.number },
+              'Assignee': { rich_text: [{ text: { content: issue.assignee?.login || '' } }] },
+              'Labels': { multi_select: issue.labels?.filter(l => !l.name.startsWith('priority:') && l.name !== 'sync-bot').map(l => ({ name: l.name })) || [] },
+              'GitHub URL': { url: issue.html_url }
+            };
+
+            if (searchData.results?.length > 0) {
+              // 기존 페이지 업데이트
+              const pageId = searchData.results[0].id;
+
+              // 충돌 감지: 노션의 last_edited_time이 이전 동기화 이후에 바뀌었는지 확인
+              const notionPage = searchData.results[0];
+              const notionEditedAt = new Date(notionPage.last_edited_time);
+              const lastSyncComment = notionPage.properties['Last Sync']?.date?.start;
+              const lastSyncAt = lastSyncComment ? new Date(lastSyncComment) : new Date(0);
+
+              if (notionEditedAt > lastSyncAt) {
+                // 충돌 가능성: 노션에서도 수정됨
+                // GitHub Issue에 충돌 알림 코멘트 추가
+                await github.rest.issues.createComment({
+                  ...context.repo,
+                  issue_number: issue.number,
+                  body: `⚠️ **동기화 충돌 감지**\n\n이 태스크가 노션에서도 수정되었습니다 (${notionEditedAt.toISOString()}).\nGitHub 변경사항으로 덮어씁니다. 노션에서 수정한 내용이 있다면 확인해주세요.`
+                });
+              }
+
+              // 업데이트 실행
+              await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${notionApiKey}`,
+                  'Notion-Version': '2022-06-28',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  properties: {
+                    ...properties,
+                    'Last Sync': { date: { start: new Date().toISOString() } }
+                  }
+                })
+              });
+              console.log(`Updated Notion page for Issue #${issue.number}`);
+            } else {
+              // 새 페이지 생성
+              await fetch('https://api.notion.com/v1/pages', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${notionApiKey}`,
+                  'Notion-Version': '2022-06-28',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  parent: { database_id: notionDbId },
+                  properties: {
+                    ...properties,
+                    'Last Sync': { date: { start: new Date().toISOString() } }
+                  }
+                })
+              });
+              console.log(`Created Notion page for Issue #${issue.number}`);
+            }

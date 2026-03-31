@@ -1,0 +1,41 @@
+{
+  "skill_name": "project-pipeline",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "이 요구사항정의서를 분석해서 업무기능분해도를 만들어줘. 파일: evals/files/sample_requirements.json",
+      "expected_output": "요구사항을 Level 1~4로 분해한 업무기능분해도 엑셀 파일이 생성됨",
+      "files": ["evals/files/sample_requirements.json"],
+      "expectations": [
+        "업무기능분해도 엑셀 파일(.xlsx)이 생성됨",
+        "Level 1~4까지 계층적으로 분해됨",
+        "각 단위기능에 관련 레포가 매핑됨",
+        "헤더에 스타일이 적용됨"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "이 WBS를 기반으로 상세기능설계서를 만들어줘. 프로젝트 코드는 PC_PLC. 파일: evals/files/sample_wbs.json",
+      "expected_output": "프로세스별 시트가 있는 상세기능설계서 엑셀 파일이 생성됨",
+      "files": ["evals/files/sample_wbs.json"],
+      "expectations": [
+        "상세기능설계서 엑셀 파일(.xlsx)이 생성됨",
+        "목차 탭에 프로세스 목록이 있음",
+        "프로세스별 시트에 Step 상세 테이블이 있음",
+        "프로세스 ID가 PC_PLC_XXXX 형식으로 부여됨"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "요구사항정의서부터 일정표까지 전체 파이프라인을 실행해줘. 프로젝트명: AI 챗봇, 시작일: 2026-04-01, 팀원: 이지용(BE), 김철수(BE), 박영희(FE). 파일: evals/files/sample_requirements.json",
+      "expected_output": "업무기능분해도, 상세기능설계서, 일정표 엑셀 파일이 각각 생성됨",
+      "files": ["evals/files/sample_requirements.json"],
+      "expectations": [
+        "3개 이상의 엑셀 파일이 생성됨 (WBS, 설계서, 일정표)",
+        "각 단계가 순차적으로 실행됨",
+        "일정표에 팀원별 태스크 배정이 있음",
+        "사용자 확인을 구하는 메시지가 포함됨"
+      ]
+    }
+  ]
+}

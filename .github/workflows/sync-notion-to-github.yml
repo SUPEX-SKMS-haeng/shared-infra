@@ -1,0 +1,199 @@
+# 노션 → GitHub 동기화 (폴링, 5분 간격)
+# 노션 DB에서 변경된 태스크를 감지하여 GitHub Issue에 반영
+name: Sync Notion to GitHub
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # 5분마다 실행
+  workflow_dispatch: # 수동 실행 가능
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Sync Notion to GitHub
+        uses: actions/github-script@v7
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          ORG_NAME: 'agent-template-apps'
+        with:
+          script: |
+            const notionApiKey = process.env.NOTION_API_KEY;
+            const notionDbId = process.env.NOTION_DATABASE_ID;
+            const orgName = process.env.ORG_NAME;
+
+            // 최근 6분간 수정된 노션 페이지 조회 (5분 폴링 + 1분 버퍼)
+            const sixMinAgo = new Date(Date.now() - 6 * 60 * 1000).toISOString();
+
+            const queryRes = await fetch(`https://api.notion.com/v1/databases/${notionDbId}/query`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${notionApiKey}`,
+                'Notion-Version': '2022-06-28',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                filter: {
+                  timestamp: 'last_edited_time',
+                  last_edited_time: { after: sixMinAgo }
+                },
+                sorts: [{ timestamp: 'last_edited_time', direction: 'descending' }]
+              })
+            });
+            const queryData = await queryRes.json();
+
+            if (!queryData.results?.length) {
+              console.log('변경된 노션 페이지 없음');
+              return;
+            }
+
+            for (const page of queryData.results) {
+              const props = page.properties;
+
+              // Last Sync 시간 확인: 동기화 봇에 의한 변경이면 스킵
+              const lastSync = props['Last Sync']?.date?.start;
+              const lastEdited = page.last_edited_time;
+              if (lastSync) {
+                const syncTime = new Date(lastSync).getTime();
+                const editTime = new Date(lastEdited).getTime();
+                // 동기화 시간과 수정 시간 차이가 10초 이내면 봇에 의한 변경
+                if (Math.abs(editTime - syncTime) < 10000) {
+                  console.log(`Skip (bot edit): ${props['Name']?.title?.[0]?.text?.content}`);
+                  continue;
+                }
+              }
+
+              const issueNumber = props['Issue Number']?.number;
+              const repo = props['Repository']?.select?.name;
+              const title = props['Name']?.title?.[0]?.text?.content || '';
+              const assignee = props['Assignee']?.rich_text?.[0]?.text?.content || '';
+
+              // 상태 매핑: 노션 → GitHub
+              const notionStatus = props['Status']?.select?.name || 'To Do';
+              let labels = props['Labels']?.multi_select?.map(l => l.name) || [];
+
+              // 우선순위 매핑
+              const priority = props['Priority']?.select?.name || 'Medium';
+              labels = labels.filter(l => !l.startsWith('priority:'));
+              labels.push(`priority:${priority.toLowerCase()}`);
+
+              // sync-bot 라벨 추가 (GitHub→Notion 워크플로우에서 무한루프 방지용)
+              if (!labels.includes('sync-bot')) labels.push('sync-bot');
+
+              if (!repo) {
+                console.log(`Skip (no repo): ${title}`);
+                continue;
+              }
+
+              if (issueNumber) {
+                // 기존 Issue 업데이트
+                try {
+                  // 충돌 감지: GitHub Issue의 updated_at 확인
+                  const { data: existingIssue } = await github.rest.issues.get({
+                    owner: orgName,
+                    repo: repo,
+                    issue_number: issueNumber
+                  });
+
+                  const githubUpdatedAt = new Date(existingIssue.updated_at);
+                  const lastSyncAt = lastSync ? new Date(lastSync) : new Date(0);
+
+                  if (githubUpdatedAt > lastSyncAt) {
+                    // 충돌: GitHub에서도 수정됨 → 변경 거부 + 노션 코멘트
+                    console.log(`Conflict detected for Issue #${issueNumber} in ${repo}`);
+
+                    // 노션 페이지에 충돌 코멘트 추가
+                    await fetch(`https://api.notion.com/v1/comments`, {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': `Bearer ${notionApiKey}`,
+                        'Notion-Version': '2022-06-28',
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        parent: { page_id: page.id },
+                        rich_text: [{
+                          text: {
+                            content: `⚠️ 동기화 충돌: GitHub에서도 수정됨 (${githubUpdatedAt.toISOString()}). 이 변경은 반영되지 않았습니다. 다시 수정하면 반영됩니다.`
+                          }
+                        }]
+                      })
+                    });
+                    continue;
+                  }
+
+                  // Issue 업데이트
+                  await github.rest.issues.update({
+                    owner: orgName,
+                    repo: repo,
+                    issue_number: issueNumber,
+                    title: title,
+                    labels: labels,
+                    assignees: assignee ? [assignee] : [],
+                    state: notionStatus === 'Done' ? 'closed' : 'open'
+                  });
+
+                  // 상태 라벨 업데이트
+                  if (notionStatus === 'In Progress') {
+                    await github.rest.issues.addLabels({
+                      owner: orgName, repo, issue_number: issueNumber,
+                      labels: ['in-progress']
+                    });
+                  }
+
+                  console.log(`Updated Issue #${issueNumber} in ${repo}`);
+                } catch (e) {
+                  console.error(`Failed to update Issue #${issueNumber}: ${e.message}`);
+                }
+              } else {
+                // 새 Issue 생성 (노션에서 생성된 태스크)
+                try {
+                  const { data: newIssue } = await github.rest.issues.create({
+                    owner: orgName,
+                    repo: repo,
+                    title: title,
+                    labels: labels,
+                    assignees: assignee ? [assignee] : [],
+                    body: `노션에서 생성된 태스크입니다.\n\n---\n_Synced from Notion_`
+                  });
+
+                  // 노션 페이지에 Issue 번호 업데이트
+                  await fetch(`https://api.notion.com/v1/pages/${page.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Authorization': `Bearer ${notionApiKey}`,
+                      'Notion-Version': '2022-06-28',
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      properties: {
+                        'Issue Number': { number: newIssue.number },
+                        'GitHub URL': { url: newIssue.html_url },
+                        'Last Sync': { date: { start: new Date().toISOString() } }
+                      }
+                    })
+                  });
+
+                  console.log(`Created Issue #${newIssue.number} in ${repo} from Notion`);
+                } catch (e) {
+                  console.error(`Failed to create Issue in ${repo}: ${e.message}`);
+                }
+              }
+
+              // Last Sync 시간 업데이트
+              await fetch(`https://api.notion.com/v1/pages/${page.id}`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${notionApiKey}`,
+                  'Notion-Version': '2022-06-28',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  properties: {
+                    'Last Sync': { date: { start: new Date().toISOString() } }
+                  }
+                })
+              });
+            }

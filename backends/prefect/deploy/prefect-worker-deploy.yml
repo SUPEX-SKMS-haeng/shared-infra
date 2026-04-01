@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: prefect-worker
+    project: agent
+  name: prefect-worker
+  namespace: agent
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1  # 수평 확장: replicas 수 조절
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: prefect-worker
+      project: agent
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: prefect-worker
+        project: agent
+    spec:
+      automountServiceAccountToken: true
+      initContainers:
+      # flows 배포 등록 (Worker 시작 전 1회 실행)
+      - name: deploy-flows
+        image: prefecthq/prefect:3-latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - bash
+        - -c
+        - |
+          prefect work-pool create default-pool --type process 2>/dev/null
+          python /opt/prefect/flows/deploy.py
+        env:
+        - name: PREFECT_API_URL
+          value: "http://prefect-server-svc:4200/api"
+        volumeMounts:
+        - mountPath: /opt/prefect/flows
+          name: flows
+          subPath: agent/prefect/flows
+          readOnly: true
+      containers:
+      - name: prefect-worker
+        image: prefecthq/prefect:3-latest
+        imagePullPolicy: IfNotPresent
+        command: ["prefect", "worker", "start", "--pool", "default-pool", "--type", "process"]
+        env:
+        - name: PREFECT_API_URL
+          value: "http://prefect-server-svc:4200/api"
+        resources:
+          limits:
+            cpu: 300m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/prefect/flows
+          name: flows
+          subPath: agent/prefect/flows
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: agent-account
+      serviceAccountName: agent-account
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: flows
+        persistentVolumeClaim:
+          claimName: agent-file-pvc

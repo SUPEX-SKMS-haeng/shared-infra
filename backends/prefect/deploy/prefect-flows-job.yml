@@ -1,0 +1,77 @@
+# ============================================================
+# Flow 파일을 Git에서 PVC로 동기화하는 Job
+# ============================================================
+# 사전 준비:
+#   Git 토큰 Secret 생성 (최초 1회)
+#   kubectl create secret generic git-credentials -n agent \
+#     --from-literal=token=ghp_xxxxxxxxxxxx
+#
+# 사용법:
+#   1. Job 실행 (기존 Job 삭제 후 재실행)
+#      kubectl delete job prefect-flows-sync -n agent --ignore-not-found
+#      kubectl apply -f prefect-flows-job.yml
+#
+#   2. Worker 재시작 (새 flow 반영)
+#      kubectl rollout restart deployment prefect-worker -n agent
+# ============================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: prefect-flows-sync
+  namespace: agent
+  labels:
+    app: prefect-flows
+    project: agent
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: prefect-flows
+        project: agent
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: sync-flows
+        image: alpine/git:latest
+        command:
+        - sh
+        - -c
+        - |
+          DEST=/data/agent/prefect/flows
+          mkdir -p $DEST
+
+          # 레포 클론 (sparse checkout으로 flows 디렉토리만)
+          cd /tmp
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://${GIT_TOKEN}@${GIT_REPO_HOST}/${GIT_REPO_PATH}.git repo
+          cd repo
+          git sparse-checkout set $GIT_FLOWS_PATH
+
+          # PVC에 동기화
+          rm -rf $DEST/*
+          cp -r $GIT_FLOWS_PATH/* $DEST/
+          echo "Synced flows to PVC:"
+          ls -la $DEST/
+        env:
+        - name: GIT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: git-credentials
+              key: token
+        - name: GIT_REPO_HOST
+          value: "github.com"
+        - name: GIT_REPO_PATH
+          value: "agent-template-apps/shared-infra"
+        - name: GIT_FLOWS_PATH
+          value: "backends/prefect/flows"
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      serviceAccount: agent-account
+      serviceAccountName: agent-account
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: agent-file-pvc

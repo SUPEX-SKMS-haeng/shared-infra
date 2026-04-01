@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: prefect-server
+    project: agent
+  name: prefect-server-svc
+  namespace: agent
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 4200
+    protocol: TCP
+    targetPort: 4200
+  selector:
+    app: prefect-server
+    project: agent
+  sessionAffinity: None
+  type: ClusterIP

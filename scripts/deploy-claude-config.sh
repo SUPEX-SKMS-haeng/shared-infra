@@ -43,21 +43,51 @@ for repo in "${REPOS[@]}"; do
   echo "▶ ${repo}"
 
   if [ "$DRY_RUN" = true ]; then
-    echo "  [DRY] .claude/commands/ → ${repo}/.claude/commands/"
-    echo "  [DRY] .claude/agents/ → ${repo}/.claude/agents/"
+    echo "  [DRY] .claude/commands/*.md → ${repo}/.claude/commands/ (개별 symlink)"
+    echo "  [DRY] .claude/agents/*.md → ${repo}/.claude/agents/ (개별 symlink)"
+    echo "  [DRY] .claude/skills/*/ → ${repo}/.claude/skills/ (개별 symlink)"
     echo "  [DRY] .github/ISSUE_TEMPLATE/ → ${repo}/.github/ISSUE_TEMPLATE/"
     echo "  [DRY] .github/workflows/sync-notion.yml → ${repo}/.github/workflows/"
 
   else
-    # .claude/commands 복사
-    mkdir -p "${REPO_DIR}/.claude/commands"
-    cp -r "${INFRA_DIR}/.claude/commands/"* "${REPO_DIR}/.claude/commands/" 2>/dev/null || true
-    echo "  ✓ .claude/commands/ 복사 완료"
+    # 기존 디렉토리 symlink이 있으면 실제 디렉토리로 교체
+    for subdir in commands agents skills; do
+      if [ -L "${REPO_DIR}/.claude/${subdir}" ]; then
+        rm "${REPO_DIR}/.claude/${subdir}"
+      fi
+    done
 
-    # .claude/agents 복사
+    # .claude/commands 개별 파일 symlink
+    mkdir -p "${REPO_DIR}/.claude/commands"
+    for file in "${INFRA_DIR}/.claude/commands/"*.md; do
+      [ -f "$file" ] || continue
+      name=$(basename "$file")
+      target="../../infra/.claude/commands/${name}"
+      ln -sf "$target" "${REPO_DIR}/.claude/commands/${name}"
+    done
+    echo "  ✓ .claude/commands/ 개별 symlink 완료"
+
+    # .claude/agents 개별 파일 symlink
     mkdir -p "${REPO_DIR}/.claude/agents"
-    cp -r "${INFRA_DIR}/.claude/agents/"* "${REPO_DIR}/.claude/agents/" 2>/dev/null || true
-    echo "  ✓ .claude/agents/ 복사 완료"
+    for file in "${INFRA_DIR}/.claude/agents/"*.md; do
+      [ -f "$file" ] || continue
+      name=$(basename "$file")
+      target="../../infra/.claude/agents/${name}"
+      ln -sf "$target" "${REPO_DIR}/.claude/agents/${name}"
+    done
+    echo "  ✓ .claude/agents/ 개별 symlink 완료"
+
+    # .claude/skills 서브디렉토리 단위 symlink (커스텀 보존)
+    mkdir -p "${REPO_DIR}/.claude/skills"
+    for dir in "${INFRA_DIR}/.claude/skills/"*/; do
+      [ -d "$dir" ] || continue
+      name=$(basename "$dir")
+      target="../../infra/.claude/skills/${name}"
+      if [ ! -e "${REPO_DIR}/.claude/skills/${name}" ]; then
+        ln -sf "$target" "${REPO_DIR}/.claude/skills/${name}"
+      fi
+    done
+    echo "  ✓ .claude/skills/ 개별 symlink 완료"
 
     # GitHub Issue 템플릿 복사
     mkdir -p "${REPO_DIR}/.github/ISSUE_TEMPLATE"

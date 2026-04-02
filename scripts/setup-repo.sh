@@ -29,43 +29,52 @@ fi
 
 echo "✓ infra/ 서브모듈 확인 완료"
 
-# 2. .claude/ 심볼릭 링크 생성
-#    → infra/.claude/ 의 commands, agents를 앱 레포 루트에서 참조
+# 2. .claude/ 개별 파일 심볼릭 링크 생성
+#    → 디렉토리 단위가 아닌 개별 파일/서브디렉토리 symlink으로
+#      shared + per-repo custom이 공존 가능
 echo ""
-echo "▶ .claude/ 심볼릭 링크 설정 중..."
+echo "▶ .claude/ 심볼릭 링크 설정 중 (개별 파일 방식)..."
 
-mkdir -p "${REPO_DIR}/.claude"
-
-# commands 심볼릭 링크
-if [ -L "${REPO_DIR}/.claude/commands" ]; then
-  rm "${REPO_DIR}/.claude/commands"
-elif [ -d "${REPO_DIR}/.claude/commands" ]; then
-  echo "  ⚠️  .claude/commands/ 가 이미 디렉토리로 존재합니다. 백업 후 교체합니다."
-  mv "${REPO_DIR}/.claude/commands" "${REPO_DIR}/.claude/commands.bak.$(date +%s)"
-fi
-ln -s ../infra/.claude/commands "${REPO_DIR}/.claude/commands"
-echo "  ✓ .claude/commands → infra/.claude/commands"
-
-# agents 심볼릭 링크
-if [ -L "${REPO_DIR}/.claude/agents" ]; then
-  rm "${REPO_DIR}/.claude/agents"
-elif [ -d "${REPO_DIR}/.claude/agents" ]; then
-  echo "  ⚠️  .claude/agents/ 가 이미 디렉토리로 존재합니다. 백업 후 교체합니다."
-  mv "${REPO_DIR}/.claude/agents" "${REPO_DIR}/.claude/agents.bak.$(date +%s)"
-fi
-ln -s ../infra/.claude/agents "${REPO_DIR}/.claude/agents"
-echo "  ✓ .claude/agents → infra/.claude/agents"
-
-# skills (있으면)
-if [ -d "${REPO_DIR}/infra/.claude/skills" ]; then
-  if [ -L "${REPO_DIR}/.claude/skills" ]; then
-    rm "${REPO_DIR}/.claude/skills"
-  elif [ -d "${REPO_DIR}/.claude/skills" ]; then
-    mv "${REPO_DIR}/.claude/skills" "${REPO_DIR}/.claude/skills.bak.$(date +%s)"
+# 기존 디렉토리 symlink이 있으면 실제 디렉토리로 교체
+for subdir in commands agents skills; do
+  if [ -L "${REPO_DIR}/.claude/${subdir}" ]; then
+    echo "  ↻ .claude/${subdir} 디렉토리 symlink → 실제 디렉토리로 전환"
+    rm "${REPO_DIR}/.claude/${subdir}"
   fi
-  ln -s ../infra/.claude/skills "${REPO_DIR}/.claude/skills"
-  echo "  ✓ .claude/skills → infra/.claude/skills"
-fi
+done
+
+mkdir -p "${REPO_DIR}/.claude/commands"
+mkdir -p "${REPO_DIR}/.claude/agents"
+mkdir -p "${REPO_DIR}/.claude/skills"
+
+# commands: 개별 .md 파일 symlink
+for file in "${REPO_DIR}/infra/.claude/commands/"*.md; do
+  [ -f "$file" ] || continue
+  name=$(basename "$file")
+  target="../../infra/.claude/commands/${name}"
+  ln -sf "$target" "${REPO_DIR}/.claude/commands/${name}"
+done
+echo "  ✓ .claude/commands/ — shared 파일 개별 symlink 완료"
+
+# agents: 개별 .md 파일 symlink
+for file in "${REPO_DIR}/infra/.claude/agents/"*.md; do
+  [ -f "$file" ] || continue
+  name=$(basename "$file")
+  target="../../infra/.claude/agents/${name}"
+  ln -sf "$target" "${REPO_DIR}/.claude/agents/${name}"
+done
+echo "  ✓ .claude/agents/ — shared 파일 개별 symlink 완료"
+
+# skills: 서브디렉토리 단위 symlink (커스텀 디렉토리가 이미 있으면 건드리지 않음)
+for dir in "${REPO_DIR}/infra/.claude/skills/"*/; do
+  [ -d "$dir" ] || continue
+  name=$(basename "$dir")
+  target="../../infra/.claude/skills/${name}"
+  if [ ! -e "${REPO_DIR}/.claude/skills/${name}" ]; then
+    ln -sf "$target" "${REPO_DIR}/.claude/skills/${name}"
+  fi
+done
+echo "  ✓ .claude/skills/ — shared 스킬 개별 symlink 완료"
 
 # 3. .github/ 심볼릭 링크 (Issue 템플릿, Notion 동기화)
 echo ""
@@ -284,9 +293,9 @@ echo "  ├── .vscode/"
 echo "  │   ├── settings.json            ← 저장 시 자동 포맷"
 echo "  │   └── extensions.json          ← 추천 확장 목록"
 echo "  ├── .claude/"
-echo "  │   ├── commands → infra/.claude/commands   (심볼릭 링크)"
-echo "  │   ├── agents  → infra/.claude/agents      (심볼릭 링크)"
-echo "  │   └── skills  → infra/.claude/skills      (심볼릭 링크)"
+echo "  │   ├── commands/  (개별 파일 symlink + 커스텀 추가 가능)"
+echo "  │   ├── agents/   (개별 파일 symlink + 커스텀 추가 가능)"
+echo "  │   └── skills/   (개별 서브디렉토리 symlink + 커스텀 추가 가능)"
 echo "  ├── .github/"
 echo "  │   ├── ISSUE_TEMPLATE → infra/.github/ISSUE_TEMPLATE (심볼릭 링크)"
 echo "  │   ├── workflows/claude-review.yml          (자동 생성)"

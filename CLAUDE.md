@@ -13,10 +13,8 @@
 - 브랜치 전략: `main` (운영), `develop` (개발)
 - 기능 브랜치: `feat/{앱약어}/{이슈번호}-{설명}` (예: `feat/be-auth/12-add-oauth`)
 - 버그 수정: `fix/{앱약어}/{이슈번호}-{설명}`
-- 커밋 메시지: `type(scope): description` (Conventional Commits)
-  - type: feat, fix, refactor, test, docs, chore
-  - scope: 앱 약어 (auth, chat, admin 등)
-- PR 생성 시 반드시 관련 Issue 번호 연결 (`Closes #123`)
+- 커밋 메시지 규칙: @docs/conventions/git/commit-message.md
+- PR 메시지 규칙: @docs/conventions/git/pull-request.md
 - PR은 최소 1명 리뷰 후 머지
 
 ## 전체 서비스 공통 규약

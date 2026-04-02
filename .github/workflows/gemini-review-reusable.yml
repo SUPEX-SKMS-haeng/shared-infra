@@ -1,0 +1,207 @@
+# ============================================================
+# Gemini Code Review - Reusable Workflow
+# ============================================================
+# shared-infra에 1개만 정의하고, 각 앱 레포에서 호출합니다.
+#
+# 사용법 (각 앱 레포의 .github/workflows/gemini-review.yml):
+#   jobs:
+#     review:
+#       uses: agent-template-apps/shared-infra/.github/workflows/gemini-review-reusable.yml@main
+#       secrets: inherit
+# ============================================================
+
+name: Gemini Code Review (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      app_type:
+        description: "앱 타입: backend 또는 frontend"
+        required: true
+        type: string
+      app_name:
+        description: "앱 이름 (예: backend-auth, frontend)"
+        required: true
+        type: string
+    secrets:
+      GEMINI_API_KEY:
+        required: true
+
+concurrency:
+  group: '${{ github.workflow }}-review-${{ github.event.pull_request.number }}'
+  cancel-in-progress: true
+
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gemini Code Review (Backend)
+        if: inputs.app_type == 'backend'
+        uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          settings: |-
+            {
+              "mcpServers": {
+                "github": {
+                  "command": "docker",
+                  "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
+                           "ghcr.io/github/github-mcp-server:v0.27.0"],
+                  "includeTools": [
+                    "add_comment_to_pending_review",
+                    "pull_request_read",
+                    "pull_request_review_write"
+                  ],
+                  "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+                  }
+                }
+              }
+            }
+          prompt: |
+            이 PR의 변경사항을 아래 기준으로 리뷰해줘.
+            리뷰 결과는 한국어로 작성하고, 각 카테고리별로 이모지와 함께 정리해줘.
+            인라인 코멘트는 해당 코드 라인에 직접 달아줘.
+
+            ## 리뷰 기준
+
+            ### 🎯 기능 충족
+            - PR 설명(또는 연결된 Issue)의 요구사항을 코드가 충족하는지
+            - 누락된 엣지 케이스가 없는지
+            - API 엔드포인트가 명세대로 동작하는지
+
+            ### 🏗️ 아키텍처 & 레이어 분리
+            - 라우터(routes/)에 비즈니스 로직이 섞여있지 않은지
+            - 비즈니스 로직이 service/ 레이어에 있는지
+            - DB 접근이 repository/ 또는 infra/database/를 통하는지
+            - 순환 import가 없는지
+
+            ### ⚠️ 에러 처리 & 예외
+            - ServiceException + ErrorCode 패턴을 사용하는지
+            - bare except (except:) 또는 except Exception + pass 가 없는지
+            - 에러를 삼키지 않는지 (catch 후 return None 등)
+            - 라우터에서 직접 JSONResponse 에러를 반환하지 않는지
+            - 새 ErrorCode 추가 시 번호 체계(1XXXX/9XXXX)를 따르는지
+
+            ### 🔒 보안
+            - 하드코딩된 시크릿, API 키, 비밀번호가 없는지
+            - SQL injection 가능성 (raw SQL 사용 시 파라미터 바인딩 확인)
+            - 인증/인가: get_current_user() 의존성을 사용하는지
+            - 민감 정보가 로그에 노출되지 않는지
+            - CORS, 헤더 조작 이슈가 없는지
+
+            ### 📝 코드 품질 & 포맷
+            - Python 네이밍 컨벤션 (snake_case 변수/함수, PascalCase 클래스)
+            - 타입 힌트가 적절히 사용되었는지
+            - 불필요한 코드 중복이 없는지
+            - 매직 넘버/스트링 대신 상수 사용
+            - print() 대신 logger 사용
+
+            ### 🧪 테스트
+            - 새 기능에 대한 테스트가 있는지
+            - 테스트가 실제 로직을 검증하는지 (단순 import 테스트가 아닌지)
+
+            ### 📦 의존성 & 설정
+            - 새 패키지 추가 시 pyproject.toml에 등록했는지
+            - 환경변수 추가 시 config.py에 기본값과 함께 등록했는지
+            - .env.example 업데이트 필요 여부
+
+            ## 출력 형식
+            - 코드 라인별 이슈는 인라인 코멘트로 [CRITICAL/HIGH/MEDIUM/LOW] 태그와 함께
+            - 최종 요약은 Review Summary(2-3문장) + 카테고리별 General Feedback(불릿)
+
+      - name: Gemini Code Review (Frontend)
+        if: inputs.app_type == 'frontend'
+        uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          settings: |-
+            {
+              "mcpServers": {
+                "github": {
+                  "command": "docker",
+                  "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
+                           "ghcr.io/github/github-mcp-server:v0.27.0"],
+                  "includeTools": [
+                    "add_comment_to_pending_review",
+                    "pull_request_read",
+                    "pull_request_review_write"
+                  ],
+                  "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+                  }
+                }
+              }
+            }
+          prompt: |
+            이 PR의 변경사항을 아래 기준으로 리뷰해줘.
+            리뷰 결과는 한국어로 작성하고, 각 카테고리별로 이모지와 함께 정리해줘.
+            인라인 코멘트는 해당 코드 라인에 직접 달아줘.
+
+            ## 리뷰 기준
+
+            ### 🎯 기능 충족
+            - PR 설명(또는 연결된 Issue)의 요구사항을 코드가 충족하는지
+            - 누락된 엣지 케이스가 없는지
+            - 사용자 인터랙션 시나리오가 빠짐없이 처리되는지
+
+            ### 🏗️ 컴포넌트 구조
+            - 함수형 컴포넌트 + hooks 패턴을 사용하는지
+            - 파일당 하나의 export default인지
+            - 공통 컴포넌트는 @shared/에서, 앱 전용은 src/components/에서 import하는지
+            - Props 인터페이스가 정의되어 있는지
+            - 컴포넌트가 너무 크지 않은지 (200줄 이상이면 분리 고려)
+
+            ### ⚠️ 에러 처리
+            - API 호출 실패 시 사용자에게 에러 표시가 되는지
+            - try-catch에서 에러를 무시하지 않는지
+            - 빈 catch {} 블록이 없는지
+            - 로딩/에러/빈 상태가 모두 처리되는지
+
+            ### 🔒 보안 & 인증
+            - 하드코딩된 토큰, API URL이 없는지
+            - 인증이 필요한 API에 토큰이 올바르게 전달되는지
+            - XSS 취약점 (dangerouslySetInnerHTML 사용 시 sanitize 확인)
+            - 민감 정보가 console.log에 노출되지 않는지
+
+            ### 📝 코드 품질 & 포맷
+            - TypeScript 타입이 적절히 정의되었는지 (any 남용 여부)
+            - 네이밍 컨벤션 (PascalCase 컴포넌트, camelCase 변수/함수)
+            - useEffect cleanup이 빠지지 않았는지
+            - 불필요한 리렌더링 유발 코드가 없는지
+            - API 호출은 src/api/ 레이어를 통하는지 (컴포넌트 직접 호출 금지)
+            - snake_case를 프론트에서 직접 쓰지 않는지 (caseConverter 사용)
+
+            ### 🌐 다국어 & 접근성
+            - 하드코딩된 한국어/영어 문자열이 없는지 (locale 사용)
+            - 기본적인 접근성 (alt, aria-label 등)
+
+            ### 📦 의존성
+            - 새 패키지 추가 시 package.json에 등록했는지
+            - 기존 @shared/ 유틸로 해결 가능한데 새 라이브러리를 추가하진 않았는지
+
+            ## 출력 형식
+            - 코드 라인별 이슈는 인라인 코멘트로 [CRITICAL/HIGH/MEDIUM/LOW] 태그와 함께
+            - 최종 요약은 Review Summary(2-3문장) + 카테고리별 General Feedback(불릿)

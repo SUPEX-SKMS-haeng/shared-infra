@@ -47,7 +47,7 @@ for repo in "${REPOS[@]}"; do
     echo "  [DRY] .claude/agents/ → ${repo}/.claude/agents/"
     echo "  [DRY] .github/ISSUE_TEMPLATE/ → ${repo}/.github/ISSUE_TEMPLATE/"
     echo "  [DRY] .github/workflows/sync-notion.yml → ${repo}/.github/workflows/"
-    echo "  [DRY] GEMINI.md → ${repo}/GEMINI.md"
+
   else
     # .claude/commands 복사
     mkdir -p "${REPO_DIR}/.claude/commands"
@@ -68,10 +68,6 @@ for repo in "${REPOS[@]}"; do
     mkdir -p "${REPO_DIR}/.github/workflows"
     cp "${INFRA_DIR}/.github/workflows/sync-notion.yml" "${REPO_DIR}/.github/workflows/" 2>/dev/null || true
     echo "  ✓ .github/workflows/sync-notion.yml 복사 완료"
-
-    # GEMINI.md 복사 (Gemini CLI 프로젝트 컨텍스트)
-    cp "${INFRA_DIR}/GEMINI.md" "${REPO_DIR}/GEMINI.md" 2>/dev/null || true
-    echo "  ✓ GEMINI.md 복사 완료"
   fi
   echo ""
 done

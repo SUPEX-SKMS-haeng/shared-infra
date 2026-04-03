@@ -27,6 +27,14 @@ http:
       middlewares:
         - retry-attempts
         - auth-replace-path
+    agent-router:
+      entryPoints:
+        - web
+      rule: PathRegexp(`/api/v1/agent/.*`)
+      middlewares:
+        - auth
+        - agent-replace-path
+      service: "agent-svc"
     llm-gateway-router:
       entryPoints:
         - web
@@ -50,6 +58,10 @@ http:
       loadBalancer:
         servers:
           - url: http://{{ env "MY_HOST" }}:8001/
+    agent-svc:
+      loadBalancer:
+        servers:
+          - url: http://{{ env "MY_HOST" }}:8006/
     llm-gateway-svc:
       loadBalancer:
         servers:
@@ -86,6 +98,10 @@ http:
       replacePathRegex:
         regex: "^/api/v1/chat/(.*)"
         replacement: "/api/v1/$1"
+    agent-replace-path:
+      replacePathRegex:
+        regex: "^/api/v1/agent/(.*)"
+        replacement: "/api/v1/agent/$1"
     llm-gateway-replace-path:
       replacePathRegex:
         regex: "^/api/v1/llm-gateway/(.*)"

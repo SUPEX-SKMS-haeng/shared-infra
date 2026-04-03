@@ -30,7 +30,7 @@ ORG="agent-template-apps"
 GITHUB_BASE="https://github.com/${ORG}"
 
 # ── 앱 목록 ──
-BACKEND_REPOS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp")
+BACKEND_REPOS=("backend-auth" "backend-base" "backend-chat" "backend-llm-gateway" "backend-mcp" "backend-agent")
 FRONTEND_REPOS=("frontend")
 ALL_REPOS=("${BACKEND_REPOS[@]}" "${FRONTEND_REPOS[@]}")
 
@@ -181,7 +181,7 @@ select_repos() {
   fi
 
   echo ""
-  echo "  [0] 전체 (6개 모두)"
+  echo "  [0] 전체 (7개 모두)"
   echo ""
   echo "  ── 백엔드 ──"
   echo "  [1] backend-auth          인증/JWT/사용자관리"
@@ -189,11 +189,12 @@ select_repos() {
   echo "  [3] backend-chat          채팅/LLM 스트리밍"
   echo "  [4] backend-llm-gateway   LLM 라우팅/프롬프트관리"
   echo "  [5] backend-mcp           MCP 도구/벡터DB"
+  echo "  [6] backend-agent         RAG 에이전트/백그라운드 작업"
   echo ""
   echo "  ── 프론트엔드 ──"
-  echo "  [6] frontend              프론트엔드 (관리자+채팅)"
+  echo "  [7] frontend              프론트엔드 (관리자+채팅)"
   echo ""
-  echo -n "  선택 (쉼표로 구분, 예: 1,3,6): "
+  echo -n "  선택 (쉼표로 구분, 예: 1,3,7): "
   read -r SELECTION
 
   SELECTED_REPOS=()
@@ -210,7 +211,8 @@ select_repos() {
         3) SELECTED_REPOS+=("backend-chat") ;;
         4) SELECTED_REPOS+=("backend-llm-gateway") ;;
         5) SELECTED_REPOS+=("backend-mcp") ;;
-        6) SELECTED_REPOS+=("frontend") ;;
+        6) SELECTED_REPOS+=("backend-agent") ;;
+        7) SELECTED_REPOS+=("frontend") ;;
         *) warn "알 수 없는 번호: $num (무시)" ;;
       esac
     done

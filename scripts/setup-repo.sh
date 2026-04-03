@@ -160,6 +160,17 @@ YAML_EOF
   echo "  ✓ .github/workflows/gemini-review.yml 생성 (app_type: ${APP_TYPE})"
 fi
 
+# 앱별 변수 정의 (VS Code launch.json, README 등에서 사용)
+case "$REPO_NAME" in
+  backend-auth)         APP_DESC="인증/JWT/사용자관리"; APP_PORT="8001"; APP_ENTRY="app/main.py"; APP_CONSOLE="internalConsole"; APP_RUN="uv run uvicorn app.main:app --port 8001 --reload" ;;
+  backend-base)         APP_DESC="기본 API/조직관리"; APP_PORT="8002"; APP_ENTRY="app/main.py"; APP_CONSOLE="internalConsole"; APP_RUN="uv run uvicorn app.main:app --port 8002 --reload" ;;
+  backend-chat)         APP_DESC="채팅/LLM 스트리밍"; APP_PORT="8003"; APP_ENTRY="app/main.py"; APP_CONSOLE="internalConsole"; APP_RUN="uv run uvicorn app.main:app --port 8003 --reload" ;;
+  backend-llm-gateway)  APP_DESC="LLM 라우팅/프롬프트관리"; APP_PORT="8080"; APP_ENTRY="app/main.py"; APP_CONSOLE="internalConsole"; APP_RUN="uv run uvicorn app.main:app --port 8080 --reload" ;;
+  backend-mcp)          APP_DESC="MCP 도구/벡터DB"; APP_PORT="8084"; APP_ENTRY="server/server_sse.py"; APP_CONSOLE="integratedTerminal"; APP_RUN="uv run uvicorn app.main:app --port 8084 --reload" ;;
+  frontend)             APP_DESC="프론트엔드 (admin :3001 / chat :3000)"; APP_PORT="3000/3001"; APP_RUN="cd chat && pnpm dev  # 또는 cd admin && pnpm dev" ;;
+  *)                    APP_DESC=""; APP_PORT=""; APP_RUN="" ;;
+esac
+
 # 6. VS Code 설정 배포 (.vscode/settings.json + extensions.json)
 echo ""
 echo "▶ VS Code 설정 배포 중..."
@@ -183,6 +194,23 @@ elif [[ "$REPO_NAME" == frontend* ]]; then
   if [ -f "${REPO_DIR}/infra/configs/vscode-extensions-frontend.json" ]; then
     cp "${REPO_DIR}/infra/configs/vscode-extensions-frontend.json" "${REPO_DIR}/.vscode/extensions.json"
     echo "  ✓ .vscode/extensions.json 복사 (추천 확장 목록)"
+  fi
+fi
+
+# launch.json 배포 (F5 디버그 설정)
+if [[ "$REPO_NAME" == backend-* ]]; then
+  if [ -f "${REPO_DIR}/infra/configs/vscode-launch-backend.json" ]; then
+    sed -e "s/__APP_NAME__/${REPO_NAME}/g" \
+        -e "s|__APP_ENTRY__|${APP_ENTRY}|g" \
+        -e "s/__APP_CONSOLE__/${APP_CONSOLE}/g" \
+        "${REPO_DIR}/infra/configs/vscode-launch-backend.json" \
+        > "${REPO_DIR}/.vscode/launch.json"
+    echo "  ✓ .vscode/launch.json 생성 (debugpy: ${APP_ENTRY})"
+  fi
+elif [[ "$REPO_NAME" == frontend* ]]; then
+  if [ -f "${REPO_DIR}/infra/configs/vscode-launch-frontend.json" ]; then
+    cp "${REPO_DIR}/infra/configs/vscode-launch-frontend.json" "${REPO_DIR}/.vscode/launch.json"
+    echo "  ✓ .vscode/launch.json 복사 (Node/pnpm dev)"
   fi
 fi
 
@@ -215,17 +243,6 @@ fi
 # 8. README.md 생성 (기존 README.md가 없거나 자동생성된 것이면 덮어쓰기)
 echo ""
 echo "▶ README.md 생성 중..."
-
-# 앱별 설명과 포트 매핑
-case "$REPO_NAME" in
-  backend-auth)         APP_DESC="인증/JWT/사용자관리"; APP_PORT="8001"; APP_RUN="uv run uvicorn app.main:app --port 8001 --reload" ;;
-  backend-base)         APP_DESC="기본 API/조직관리"; APP_PORT="8002"; APP_RUN="uv run uvicorn app.main:app --port 8002 --reload" ;;
-  backend-chat)         APP_DESC="채팅/LLM 스트리밍"; APP_PORT="8003"; APP_RUN="uv run uvicorn app.main:app --port 8003 --reload" ;;
-  backend-llm-gateway)  APP_DESC="LLM 라우팅/프롬프트관리"; APP_PORT="8080"; APP_RUN="uv run uvicorn app.main:app --port 8080 --reload" ;;
-  backend-mcp)          APP_DESC="MCP 도구/벡터DB"; APP_PORT="8084"; APP_RUN="uv run uvicorn app.main:app --port 8084 --reload" ;;
-  frontend)             APP_DESC="프론트엔드 (admin :3001 / chat :3000)"; APP_PORT="3000/3001"; APP_RUN="cd chat && pnpm dev  # 또는 cd admin && pnpm dev" ;;
-  *)                    APP_DESC=""; APP_PORT=""; APP_RUN="" ;;
-esac
 
 if [ -n "$APP_DESC" ]; then
   cat > "${REPO_DIR}/README.md" << README_EOF
@@ -291,7 +308,8 @@ echo "  ├── .pre-commit-config.yaml      ← 커밋 전 자동 검사"
 fi
 echo "  ├── .vscode/"
 echo "  │   ├── settings.json            ← 저장 시 자동 포맷"
-echo "  │   └── extensions.json          ← 추천 확장 목록"
+echo "  │   ├── extensions.json          ← 추천 확장 목록"
+echo "  │   └── launch.json              ← F5 디버그 설정"
 echo "  ├── .claude/"
 echo "  │   ├── commands/  (개별 파일 symlink + 커스텀 추가 가능)"
 echo "  │   ├── agents/   (개별 파일 symlink + 커스텀 추가 가능)"

@@ -1,0 +1,17 @@
+{
+  // 백엔드 (Python/FastAPI) VS Code 디버그 설정
+  // setup-repo.sh에 의해 .vscode/launch.json으로 배포됩니다.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "__APP_NAME__",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/__APP_ENTRY__",
+      "python": "${workspaceFolder}/.venv/bin/python3.12",
+      "console": "__APP_CONSOLE__",
+      "justMyCode": true,
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}

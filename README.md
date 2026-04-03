@@ -42,7 +42,7 @@ shared-infra/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/             # 이슈 템플릿 (feature, bugfix)
 │   └── workflows/
-│       ├── claude-review-reusable.yml  # Claude PR 자동 리뷰 (reusable)
+│       ├── gemini-review-reusable.yml  # LLM PR 자동 리뷰 (reusable)
 │       ├── sync-notion.yml         # Notion 동기화
 │       └── *-build.yml             # 빌드/배포 워크플로우
 │

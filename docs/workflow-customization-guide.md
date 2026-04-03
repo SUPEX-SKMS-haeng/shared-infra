@@ -136,8 +136,8 @@
 | 백엔드 리뷰 프롬프트 | `gemini-review-reusable.yml` 내 `REVIEW_PROMPT` (backend) | 아키텍처, 에러 처리, 보안, 코드 품질, 테스트 검사 항목 |
 | 프론트엔드 리뷰 프롬프트 | `gemini-review-reusable.yml` 내 `REVIEW_PROMPT` (frontend) | 컴포넌트 구조, 보안, 국제화 검사 항목 |
 | 심각도 태그 | `gemini-review-reusable.yml` | `[CRITICAL/HIGH/MEDIUM/LOW]` 기준 |
-| 앱별 호출 워크플로우 | 각 앱 `.github/workflows/gemini-review.yml` | `app_type`, `app_name` 파라미터 (`setup-repo.sh`가 자동 생성) |
-| 워크플로우 생성 로직 | `scripts/setup-repo.sh` (`generate_claude_review_workflow` 함수) | 앱 타입 판별, 워크플로우 파일 자동 생성 |
+| 앱별 호출 워크플로우 | 각 앱 `.github/workflows/llm-review.yml` | `app_type`, `app_name` 파라미터 (`setup-repo.sh`가 자동 생성) |
+| 워크플로우 생성 로직 | `scripts/setup-repo.sh` (워크플로우 생성 섹션) | 앱 타입 판별, 워크플로우 파일 자동 생성 |
 | Notion 동기화 | `.github/workflows/sync-notion.yml` | 이슈 상태 → Notion 매핑 (To Do / In Progress / In Review / Done) |
 
 ---

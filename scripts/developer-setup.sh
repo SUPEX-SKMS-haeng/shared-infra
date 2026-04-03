@@ -330,19 +330,19 @@ setup_without_submodule() {
     [ -f "${infra}/configs/vscode-extensions-frontend.json" ] && cp "${infra}/configs/vscode-extensions-frontend.json" "${base}/.vscode/extensions.json"
   fi
 
-  # claude-review.yml 생성
+  # llm-review.yml 생성
   local app_type=""
   [[ "$repo" == backend-* ]] && app_type="backend"
   [[ "$repo" == frontend* ]] && app_type="frontend"
   if [ -n "$app_type" ]; then
-    cat > "${base}/.github/workflows/claude-review.yml" << YAML_EOF
-name: Claude Code Review
+    cat > "${base}/.github/workflows/llm-review.yml" << YAML_EOF
+name: LLM Code Review
 on:
   pull_request:
     types: [opened, synchronize]
 jobs:
   review:
-    uses: ${ORG}/shared-infra/.github/workflows/claude-review-reusable.yml@main
+    uses: ${ORG}/shared-infra/.github/workflows/gemini-review-reusable.yml@main
     with:
       app_type: ${app_type}
       app_name: ${repo}

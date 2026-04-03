@@ -9,12 +9,12 @@
 - 각 앱은 `infra/` 서브모듈로 shared-infra를 참조
 
 ## Git 워크플로우
-
+- IMPORTANT :  반드시 이 프로젝트 규칙이 우선함.
 - 브랜치 전략: `main` (운영), `develop` (개발)
 - 기능 브랜치: `feat/{앱약어}/{이슈번호}-{설명}` (예: `feat/be-auth/12-add-oauth`)
 - 버그 수정: `fix/{앱약어}/{이슈번호}-{설명}`
 - 커밋 메시지 규칙: @docs/conventions/git/commit-message.md
-- PR 메시지 규칙: @docs/conventions/git/pull-request.md
+- PR 생성 규칙: @docs/conventions/git/pull-request.md 규칙을 따를 것. 
 - PR은 최소 1명 리뷰 후 머지
 
 ## 전체 서비스 공통 규약
@@ -33,10 +33,10 @@
 
 ## PR 자동 리뷰
 
-- 모든 레포에 `gemini-review.yml` 설정됨
-- PR 생성/업데이트 시 Gemini가 자동으로 코드 리뷰 수행
+- 모든 레포에 `llm-review.yml` 설정됨
+- PR 생성/업데이트 시 LLM이 자동으로 코드 리뷰 수행
 - 리뷰 기준: 기능 충족, 아키텍처, 에러 처리, 보안, 코드 품질, 테스트
-- PL은 Gemini 리뷰 결과를 확인한 후 최종 Approve/머지 판단
+- PL은 LLM 리뷰 결과를 확인한 후 최종 Approve/머지 판단
 
 ## 공통 주의사항
 

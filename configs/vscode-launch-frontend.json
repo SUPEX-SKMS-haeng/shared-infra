@@ -1,0 +1,25 @@
+{
+  // 프론트엔드 VS Code 디버그 설정
+  // setup-repo.sh에 의해 .vscode/launch.json으로 배포됩니다.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "frontend-chat",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/chat",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "frontend-admin",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/admin",
+      "console": "integratedTerminal"
+    }
+  ]
+}

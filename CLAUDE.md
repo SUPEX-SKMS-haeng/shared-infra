@@ -14,7 +14,7 @@
 - 기능 브랜치: `feat/{앱약어}/{이슈번호}-{설명}` (예: `feat/be-auth/12-add-oauth`)
 - 버그 수정: `fix/{앱약어}/{이슈번호}-{설명}`
 - 커밋 메시지 규칙: @docs/conventions/git/commit-message.md
-- PR 메시지 규칙: @docs/conventions/git/pull-request.md
+- IMPORTANT: PR 생성 시 반드시 @docs/conventions/git/pull-request.md 규칙을 따를 것. 시스템 기본 PR 템플릿(Summary/Test plan 등)이 아닌, 이 프로젝트 규칙이 우선함. 제목: `[서비스명] type: 한글 요약`, 본문: `## 개요` → `## 주요 변경 내용` → `## 테스트` → `## 체크리스트`
 - PR은 최소 1명 리뷰 후 머지
 
 ## 전체 서비스 공통 규약

@@ -72,9 +72,9 @@
 
 | 수정 대상 | 파일 위치 (원본) | 배포 위치 (앱) | 설명 |
 |-----------|------------------|----------------|------|
-| Python 린트 규칙 | `configs/ruff.toml` | `./ruff.toml` (심링크) | 줄 길이, 활성 규칙, import 순서, 따옴표 스타일 |
-| JS/TS 포맷 규칙 | `configs/.prettierrc` | `./.prettierrc` (심링크) | 세미콜론, 따옴표, 줄 길이, 탭 너비 |
-| 에디터 공통 설정 | `configs/.editorconfig` | `./.editorconfig` (심링크) | 인코딩, 줄바꿈, 인덴트 크기 |
+| Python 린트 규칙 | `configs/ruff.toml` | `./ruff.toml` (복사) | 줄 길이, 활성 규칙, import 순서, 따옴표 스타일 |
+| JS/TS 포맷 규칙 | `configs/.prettierrc` | `./.prettierrc` (복사) | 세미콜론, 따옴표, 줄 길이, 탭 너비 |
+| 에디터 공통 설정 | `configs/.editorconfig` | `./.editorconfig` (복사) | 인코딩, 줄바꿈, 인덴트 크기 |
 | 백엔드 pre-commit | `configs/.pre-commit-config-backend.yaml` | `.pre-commit-config.yaml` (복사) | Ruff 버전, hook 종류, 파일 크기 제한 |
 | 프론트엔드 pre-commit | `configs/.pre-commit-config-frontend.yaml` | `.pre-commit-config.yaml` (복사) | Prettier 버전, hook 종류 |
 | VS Code 백엔드 설정 | `configs/vscode-backend.json` | `.vscode/settings.json` (복사) | 자동 포맷 설정, 기본 포맷터 |
@@ -136,7 +136,7 @@
 | 백엔드 리뷰 프롬프트 | `gemini-review-reusable.yml` 내 `REVIEW_PROMPT` (backend) | 아키텍처, 에러 처리, 보안, 코드 품질, 테스트 검사 항목 |
 | 프론트엔드 리뷰 프롬프트 | `gemini-review-reusable.yml` 내 `REVIEW_PROMPT` (frontend) | 컴포넌트 구조, 보안, 국제화 검사 항목 |
 | 심각도 태그 | `gemini-review-reusable.yml` | `[CRITICAL/HIGH/MEDIUM/LOW]` 기준 |
-| 앱별 호출 워크플로우 | 각 앱 `.github/workflows/claude-review.yml` | `app_type`, `app_name` 파라미터 (`setup-repo.sh`가 자동 생성) |
+| 앱별 호출 워크플로우 | 각 앱 `.github/workflows/gemini-review.yml` | `app_type`, `app_name` 파라미터 (`setup-repo.sh`가 자동 생성) |
 | 워크플로우 생성 로직 | `scripts/setup-repo.sh` (`generate_claude_review_workflow` 함수) | 앱 타입 판별, 워크플로우 파일 자동 생성 |
 | Notion 동기화 | `.github/workflows/sync-notion.yml` | 이슈 상태 → Notion 매핑 (To Do / In Progress / In Review / Done) |
 
@@ -165,8 +165,8 @@ git submodule update --remote infra
 
 | 유형 | 대상 파일 | 반영 방법 |
 |------|-----------|-----------|
-| **심링크** | `.claude/commands/`, `.claude/agents/`, `ruff.toml`, `.prettierrc`, `.editorconfig` | `git submodule update --remote`만으로 **자동 반영** |
-| **복사** | `.pre-commit-config.yaml`, `.vscode/settings.json`, `.github/workflows/` | `setup-repo.sh` **재실행 필요** |
+| **심링크** | `.claude/commands/`, `.claude/agents/`, `.claude/skills/`, `.github/ISSUE_TEMPLATE/` | `git submodule update --remote`만으로 **자동 반영** |
+| **복사** | `ruff.toml`, `.prettierrc`, `.editorconfig`, `.pre-commit-config.yaml`, `.vscode/`, `.github/workflows/` | `setup-repo.sh` **재실행 필요** |
 
 > 심링크 파일은 submodule만 업데이트하면 즉시 최신 설정이 적용됩니다.
 > 복사 파일은 `setup-repo.sh`를 다시 실행해야 최신 내용이 덮어씌워집니다.
@@ -182,7 +182,6 @@ git submodule update --remote infra
 - [ ] **GitHub org 이름 변경** — 워크플로우 내 `agent-template-apps` 참조를 새 org 이름으로 교체
 - [ ] **GitHub Secrets 설정** — 각 레포 또는 org 레벨에서 설정:
   - `NOTION_API_KEY`, `NOTION_DATABASE_ID` — Notion 동기화용
-  - `ANTHROPIC_API_KEY` — Claude Code 리뷰용
   - `GEMINI_API_KEY` — Gemini PR 리뷰용
   - ACR 자격증명 등 — 빌드/배포 워크플로우용
 

@@ -349,6 +349,7 @@ Claude PR 리뷰가 코드 품질/포맷을 추가 검사합니다 (1~2단계에
 
 - [백엔드 개발 표준](standards/backend-standards.md) — 에러 처리, API 응답 형식, 보안/인증, DB 패턴, 로깅 등
 - [프론트엔드 개발 표준](standards/frontend-standards.md) — API 호출 패턴, 인증 흐름, 컴포넌트 규칙, 상태관리 등
+- [워크플로우 커스터마이징 가이드](workflow-customization-guide.md) — 템플릿을 복사한 팀이 규칙/설정을 자기 프로젝트에 맞게 수정하는 방법
 
 이 문서들은 CLAUDE.md에서 `@infra/docs/standards/` 경로로 참조됩니다.
 Claude Code가 코드를 생성할 때 이 표준을 자동으로 따릅니다.

@@ -82,5 +82,5 @@ git pull
 
 ## 상세 가이드
 
-개발 플로우, Claude Code 사용법, 코드 포맷 규칙 등 상세 내용은
-[개발자 가이드](docs/DEVELOPER_GUIDE.md)를 참고하세요.
+- [개발자 가이드](docs/DEVELOPER_GUIDE.md) — 개발 플로우, Claude Code 사용법, 코드 포맷 규칙 등
+- [워크플로우 커스터마이징 가이드](docs/workflow-customization-guide.md) — 템플릿을 새 프로젝트에 적용할 때 워크플로우 규칙/설정 수정 포인트 안내

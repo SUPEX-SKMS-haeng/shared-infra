@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(curl -s 'http://localhost:8006/api/v1/agent/search?query=SKMS&top=3' -H 'user_id: 11810' -H 'username: test' -H 'email: test@test.com' -H 'company: test' -H 'department: test' -H 'role: %7B%22default%22%3A%22common%22%2C%22organizations%22%3A%5B%5D%7D')",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(curl:*)",
+      "Bash(python3:*)"
     ]
   }
 }

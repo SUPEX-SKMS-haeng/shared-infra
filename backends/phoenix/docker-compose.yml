@@ -2,6 +2,7 @@ services:
   phoenix:
     container_name: phoenix
     image: arizephoenix/phoenix:version-12.25.0
+    restart: unless-stopped
     ports:
       - "6006:6006"
     environment:

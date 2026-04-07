@@ -5,7 +5,8 @@
       "Bash(python3 -m json.tool)",
       "Bash(curl:*)",
       "Bash(python3:*)",
-      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(uv run:*)"
     ]
   }
 }

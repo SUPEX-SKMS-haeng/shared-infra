@@ -16,7 +16,7 @@ Playwright를 사용하여 로컬 서버(http://localhost:3000)에 접속하고,
 - 로컬 서버: http://localhost:3000
 - 로그인 계정: 아이디 `11810`, 비밀번호 `11810!@`
 - Playwright 실행: `npx playwright test` 또는 스크립트 직접 실행
-- 테스트 스크립트 위치: `/Users/a10176/SUPEX_SKMS/tests/mentor-e2e/`
+- 테스트 스크립트 위치: `./tests/mentor-e2e/`
 
 ## 테스트 프로세스
 
@@ -37,7 +37,7 @@ Playwright를 사용하여 로컬 서버(http://localhost:3000)에 접속하고,
 
 ### 3단계: 테스트 스크립트 생성 및 실행
 
-테스트 스크립트는 `/Users/a10176/SUPEX_SKMS/tests/mentor-e2e/` 디렉토리에 생성합니다.
+테스트 스크립트는 `./tests/mentor-e2e/` 디렉토리에 생성합니다.
 
 Playwright 스크립트 작성 시 반드시 다음 셀렉터를 사용합니다:
 
